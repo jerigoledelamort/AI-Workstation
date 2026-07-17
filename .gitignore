@@ -59,3 +59,9 @@ logs/
 # Backups and logs (user-specific)
 backup/
 logs/
+
+# Data directories (keep structure, ignore content)
+data/qdrant/*
+data/open-webui/*
+!data/qdrant/.gitkeep
+!data/open-webui/.gitkeep
