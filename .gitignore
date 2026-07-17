@@ -65,3 +65,6 @@ data/qdrant/*
 data/open-webui/*
 !data/qdrant/.gitkeep
 !data/open-webui/.gitkeep
+
+# SOPS secrets
+.secrets.yaml
