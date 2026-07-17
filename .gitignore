@@ -55,3 +55,7 @@ logs/
 
 # Obsidian
 .obsidian/
+
+# Backups and logs (user-specific)
+backup/
+logs/
