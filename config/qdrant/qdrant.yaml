@@ -1,0 +1,8 @@
+﻿# Qdrant configuration for AI Workstation
+service:
+  host: 127.0.0.1
+  http_port: 6333
+  grpc_port: 6334
+
+storage:
+  storage_path: ./storage
