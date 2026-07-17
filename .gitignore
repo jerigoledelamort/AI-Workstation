@@ -1,0 +1,57 @@
+﻿# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# === uv ===
+.venv/
+venv/
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# === AI Workstation specific ===
+# SOPS secrets (encrypted files CAN be committed, but raw secrets must not)
+*.secrets.raw.*
+# age keypair — NUNCA commit
+.sops/
+keys.txt
+
+# === Docker ===
+docker-compose.override.yml
+
+# === Logs ===
+*.log
+logs/
+
+# === Models (large files, use Git LFS) ===
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# === Temp files ===
+*.tmp
+*.bak
+*.zip
+
+# Obsidian
+.obsidian/
