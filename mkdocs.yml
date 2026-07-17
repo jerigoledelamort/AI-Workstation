@@ -1,0 +1,53 @@
+﻿site_name: AI Workstation
+site_description: Локальная AI-станция для разработки ПО
+site_url: http://127.0.0.1:8000
+
+theme:
+  name: material
+  language: ru
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Light mode
+
+plugins:
+  - search:
+      lang:
+        - ru
+        - en
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Requirements: requirements.md
+  - Architecture: architecture.md
+  - Roadmap: roadmap.md
+  - AI Models: ai-models.md
+  - Technology Decisions: tdr.md
+  - Security: security.md
+  - Runbook: runbook.md
