@@ -71,3 +71,8 @@ data/open-webui/*
 
 # MkDocs build output
 site/
+
+# Additional secrets
+*.key
+.env
+.env.*
