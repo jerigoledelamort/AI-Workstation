@@ -1,429 +1,250 @@
-﻿# Architecture — системная архитектура
+# Architecture
 
-> Основание: Requirements.md, AI-Workstation.md.
-> Принципы: безопасность #1, воспроизводимость #2, исключительно локально.
-
----
-
-## 1. Обзор архитектуры
+## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Windows 11 Home                           │
-│                                                             │
-│  ┌─────────────────┐    ┌──────────────────────────────┐   │
-│  │   VS Code       │    │       PowerShell             │   │
-│  │  + Koda         │    │   (automation, monitoring)    │   │
-│  │  + Continue     │    │                               │   │
-│  │  + DevContainers│    │                               │   │
-│  └────────┬────────┘    └──────────────────────────────┘   │
-│           │                                                  │
-│           ▼                                                  │
-│  ┌─────────────────┐    ┌──────────────────────────────┐   │
-│  │  LiteLLM Proxy  │◄──►│         Ollama               │   │
-│  │  (API Gateway)   │    │   (Inference Engine)         │   │
-│  │  localhost:4000  │    │   localhost:11434            │   │
-│  │  + API key auth  │    │   GPU: RTX 5070 (12 GB)     │   │
-│  └────────┬────────┘    └──────────────────────────────┘   │
-│           │                                                  │
-│           ▼                                                  │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Docker Desktop (WSL2)                    │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │  │
-│  │  │ Qdrant   │  │ Open WebUI│  │  DevContainers    │  │  │
-│  │  │ (vector) │  │  (chat)  │  │  (isolated dev)   │  │  │
-│  │  └──────────┘  └──────────┘  └───────────────────┘  │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Python (uv-managed)                      │  │
-│  │  LangChain | LangGraph | RAG pipeline | Scripts      │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Secrets (SOPS + age)                     │  │
-│  │  Encrypted configs in git                             │  │
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    AI Workstation                        │
+│                                                         │
+│  ┌──────────┐    ┌──────────────┐    ┌───────────────┐  │
+│  │  VS Code │───▶│  LiteLLM     │───▶│   Ollama      │  │
+│  │ Continue │    │  Proxy       │    │   :11434      │  │
+│  │          │    │  :4000       │    │   11 models   │  │
+│  └──────────┘    └──────┬───────┘    └───────┬───────┘  │
+│                         │                    │          │
+│                    API Key Auth         Embeddings      │
+│                         │                    │          │
+│  ┌──────────┐    ┌──────▼───────┐    ┌───────▼───────┐  │
+│  │  RAG     │───▶│  Qdrant      │◀───│   Ollama      │  │
+│  │  Pipeline│    │  :6333/6334  │    │   Embeddings  │  │
+│  └──────────┘    └──────────────┘    └───────────────┘  │
+│                                                         │
+│  ┌──────────┐    ┌──────────────┐                       │
+│  │  Agent   │───▶│  Ollama      │  Tool Calling         │
+│  │  Workflow│    │  :11434      │  (LangGraph)          │
+│  └──────────┘    └──────────────┘                       │
+│                                                         │
+│  ┌──────────┐    ┌──────────────┐                       │
+│  │  MkDocs  │    │  SOPS + age  │  Secrets              │
+│  │  :8000   │    │  .secrets    │  Encryption           │
+│  └──────────┘    └──────────────┘                       │
+└─────────────────────────────────────────────────────────┘
 ```
 
----
+All services bind to 127.0.0.1. No external network access required.
 
-## 2. Сетевая топология
+## Components
 
-### 2.1. Порты и сервисы
+### Inference: Ollama 0.32.0
 
-| Сервис | Порт | Интерфейс | Auth | Назначение |
-|--------|------|-----------|------|------------|
-| Ollama | 11434 | localhost ONLY | ❌ (нет) | Inference API (GGUF) |
-| LiteLLM Proxy | 4000 | localhost ONLY | ✅ (API key) | Unified OpenAI-совместимый API |
-| Open WebUI | 8080 | localhost ONLY | ✅ (login) | Web UI для чата |
-| Qdrant | 6333 | localhost ONLY | ✅ (API key) | Vector DB REST API |
-| Qdrant gRPC | 6334 | localhost ONLY | ✅ (API key) | Vector DB gRPC |
-| MkDocs | 8000 | localhost ONLY | ❌ | Документация (dev server) |
+| Parameter | Value |
+|-----------|-------|
+| Binary | `C:\Users\egork\AppData\Local\Programs\Ollama\ollama.exe` |
+| Host | `127.0.0.1:11434` |
+| Models path | `C:\Users\egork\AppData\Local\Programs\Ollama` (env: `OLLAMA_MODELS`) |
+| Env var | `OLLAMA_HOST=127.0.0.1:11434` (User scope) |
+| Models | 11 (~97 ГБ total) |
 
-### 2.2. Принцип изоляции сети
+### API Gateway: LiteLLM Proxy 1.92.0
 
-```
-Интернет ──✕──► Локальные сервисы (нет внешнего доступа)
+| Parameter | Value |
+|-----------|-------|
+| Binary | `D:\Projects\ai\.venv\Scripts\litellm.exe` |
+| Host | `127.0.0.1:4000` |
+| Config | `config/litellm/config.yaml` |
+| Auth | `master_key` from `os.environ/LITELLM_API_KEY` |
+| Launch | `scripts/setup/start-litellm.bat` |
+| Env | `PYTHONUTF8=1`, `PYTHONIOENCODING=utf-8` |
 
-Все сервисы слушают ТОЛЬКО на 127.0.0.1 / localhost.
-Никаких привязок к 0.0.0.0 или внешним интерфейсам.
+LiteLLM decrypts `.secrets.yaml` через SOPS при запуске, устанавливая `LITELLM_API_KEY` в окружение.
 
-Ollama: OLLAMA_HOST=127.0.0.1:11434
-LiteLLM: --host 127.0.0.1 --port 4000
-Open WebUI: --env HOST=127.0.0.1
-Qdrant: --env QDRANT__SERVICE__HOST=127.0.0.1
-```
+### Vector DB: Qdrant 1.18.3
 
-### 2.3. Firewall правила (Windows Defender Firewall)
+| Parameter | Value |
+|-----------|-------|
+| Binary | `C:\Tools\qdrant\qdrant.exe` |
+| HTTP | `127.0.0.1:6333` |
+| gRPC | `127.0.0.1:6334` |
+| Config | `config/qdrant/qdrant.yaml` |
+| Storage | `C:\Tools\qdrant\storage\` |
+| Launch | `scripts/setup/start-qdrant.bat` |
 
-| Правило | Действие | Назначение |
-|---------|----------|------------|
-| Block inbound on 11434 | Deny | Ollama не доступен извне |
-| Block inbound on 4000 | Deny | LiteLLM не доступен извне |
-| Block inbound on 8080 | Deny | Open WebUI не доступен извне |
-| Block inbound on 6333-6334 | Deny | Qdrant не доступен извне |
+### RAG: LangChain + langchain-qdrant + langchain-ollama
 
----
+| Component | Package | Version |
+|-----------|---------|---------|
+| Framework | langchain | 1.3.14 |
+| Ollama integration | langchain-ollama | 1.1.0 |
+| Qdrant integration | langchain-qdrant | 1.1.0 |
+| Text splitter | langchain-text-splitters | 1.1.2 |
+| Qdrant client | qdrant-client | 1.18.0 |
 
-## 3. Уровни безопасности
+Pipeline: `scripts/rag/rag_pipeline.py`
+- `ingest <file>` — TextLoader → RecursiveCharacterTextSplitter (500/50) → OllamaEmbeddings → Qdrant
+- `query "question"` — Qdrant retriever (k=3) → ChatOllama → answer
 
-### 3.1. Многоуровневая модель защиты
+### Agents: LangGraph 1.2.9
 
-```
-┌─────────────────────────────────────────────────┐
-│ Уровень 5: Физический (доступ к машине)         │
-├─────────────────────────────────────────────────┤
-│ Уровень 4: ОС (Windows Hello, BitLocker?)       │
-├─────────────────────────────────────────────────┤
-│ Уровень 3: Сеть (localhost-only, firewall)      │
-├─────────────────────────────────────────────────┤
-│ Уровень 2: API (LiteLLM auth, API keys)         │
-├─────────────────────────────────────────────────┤
-│ Уровень 1: Данные (SOPS+age, .env isolation)    │
-└─────────────────────────────────────────────────┘
-```
+| Component | Package | Version |
+|-----------|---------|---------|
+| Framework | langgraph | 1.2.9 |
+| Prebuilt | langgraph-prebuilt | 1.1.0 |
 
-### 3.2. Управление секретами
+Workflow: `scripts/rag/agent_workflow.py`
+- `create_react_agent(llm, tools)` — ReAct pattern
+- Tools: `calculate`, `echo`
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  age keypair │────►│  SOPS encrypt│────►│  git commit  │
-│  (local)     │     │  secrets.yaml│     │  (encrypted) │
-└──────────────┘     └──────────────┘     └──────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │  SOPS decrypt│────► .env (local, gitignored)
-                    │  at runtime  │
-                    └──────────────┘
-```
+### Secrets: SOPS 3.13.2 + age 1.3.1
 
-| Секрет | Хранение | Доступ |
-|--------|----------|--------|
-| LiteLLM API key | SOPS-encrypted в git | Расшифровывается при старте |
-| Qdrant API key | SOPS-encrypted в git | Расшифровывается при старте |
-| age private key | ~/.config/sops/age/keys.txt (НЕ в git) | Локальный файл |
-| Ollama | Без auth (localhost-only) | Только через LiteLLM |
+| Parameter | Value |
+|-----------|-------|
+| SOPS binary | `C:\Tools\sops\sops.exe` |
+| age binary | `C:\Tools\age\age\age.exe` |
+| age keypair | `~/.config/sops/age/keys.txt` |
+| SOPS config | `.sops.yaml` |
+| Encrypted file | `.secrets.yaml` (gitignored) |
+| age recipient | `age174mut7mmj64wxvjhkpnl7fc06egzwu4kfxxjeufqj837dlkflc0qhcetdh` |
 
-### 3.3. Изоляция сред разработки
+### Python: uv 0.11.29 + Python 3.10.10
 
-```
-┌─────────────────────────────────────────────────┐
-│                  Host (Windows)                  │
-│                                                 │
-│  ┌─────────────────────────────────────────┐   │
-│  │  DevContainer (Docker + WSL2)           │   │
-│  │  ├── Python 3.12 + uv                   │   │
-│  │  ├── LangChain, LangGraph               │   │
-│  │  ├── Доступ к Ollama (host.docker)      │   │
-│  │  └── Изолированные зависимости          │   │
-│  └─────────────────────────────────────────┘   │
-│                                                 │
-│  ┌─────────────────────────────────────────┐   │
-│  │  Host Python (uv venv)                  │   │
-│  │  ├── LiteLLM, скрипты обслуживания      │   │
-│  │  └── Доступ ко всем сервисам            │   │
-│  └─────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────┘
-```
+| Parameter | Value |
+|-----------|-------|
+| Python | 3.10.10 |
+| uv | 0.11.29 |
+| venv | `D:\Projects\ai\.venv\` |
+| Lockfile | `uv.lock` |
+| pyproject | `pyproject.toml` |
 
----
+### Docs: MkDocs Material 9.7.7
 
-## 4. Поток данных
+| Parameter | Value |
+|-----------|-------|
+| Config | `mkdocs.yml` |
+| Pages | `docs/` (7 страниц) |
+| Build | `python -m mkdocs build --strict` |
+| Serve | `python -m mkdocs serve` → `127.0.0.1:8000` |
 
-### 4.1. Inference pipeline (базовый)
+## Network Topology
 
 ```
-Пользователь (VS Code / Open WebUI / CLI)
-    │
-    ▼
-LiteLLM Proxy (localhost:4000)
-    │  ── auth: API key
-    │  ── routing: выбор модели по сценарию
-    │  ── logging: запрос + ответ
-    ▼
-Ollama (localhost:11434)
-    │  ── загрузка модели в VRAM (если не загружена)
-    │  ── GPU inference (RTX 5070)
-    │  ── CPU offload (при нехватке VRAM)
-    ▼
-Ответ → LiteLLM → Пользователь
+127.0.0.1:11434  → Ollama (HTTP API)
+127.0.0.1:4000   → LiteLLM Proxy (OpenAI-compatible API)
+127.0.0.1:6333   → Qdrant REST API
+127.0.0.1:6334   → Qdrant gRPC API
+127.0.0.1:8000   → MkDocs (docs)
+127.0.0.1:8080   → (reserved for Open WebUI)
 ```
 
-### 4.2. RAG pipeline
+All ports blocked inbound by Windows Firewall.
 
+## Data Flow
+
+### Chat Completion
 ```
-Документы / Код
-    │
-    ▼
-Chunking (LangChain text splitters)
-    │
-    ▼
-Embeddings (Ollama: nomic-embed-text / bge-m3)
-    │
-    ▼
-Qdrant (localhost:6333)
-    │  ── хранение векторов + metadata
-    │
-    ▼
-Query → Embed query → Qdrant search (top-k)
-    │
-    ▼
-Augmented prompt (context + query)
-    │
-    ▼
-LiteLLM → Ollama → Generate answer
+VS Code/Continue → POST :4000/v1/chat/completions
+  → LiteLLM auth (API key)
+  → Route by model alias (e.g. "chat-low" → ollama/qwen3:8b)
+  → POST :11434/api/chat
+  → Ollama inference
+  → Response → LiteLLM → Continue
 ```
 
-### 4.3. Agent pipeline
-
+### RAG Ingest
 ```
-Пользователь (задача)
-    │
-    ▼
-LangGraph (agent workflow)
-    │  ── state management
-    │  ── tool calling
-    │
-    ├──► Ollama (inference: qwen3-coder:30b-a3b)
-    ├──► File system (через MCP / tools)
-    ├──► Git (через tools)
-    ├──► Terminal (через tools, изолированно)
-    ├──► Qdrant (RAG retrieval)
-    │
-    ▼
-Результат (код / документация / анализ)
+rag_pipeline.py ingest <file>
+  → TextLoader (read file)
+  → RecursiveCharacterTextSplitter (chunk_size=500, overlap=50)
+  → OllamaEmbeddings (nomic-embed-text via :11434)
+  → QdrantVectorStore.from_documents (POST :6333/collections)
 ```
 
-### 4.4. Vision pipeline
-
+### RAG Query
 ```
-Изображение (PNG/JPG)
-    │
-    ▼
-Open WebUI / LiteLLM
-    │
-    ▼
-Ollama (qwen2.5vl:7b / qwen2.5vl:32b)
-    │  ── vision encoder + LLM
-    ▼
-Текстовый ответ (OCR / анализ / описание)
+rag_pipeline.py query "question"
+  → OllamaEmbeddings (embed question)
+  → Qdrant search (top-3 similar chunks)
+  → ChatPromptTemplate (context + question)
+  → ChatOllama (qwen3:8b via :11434)
+  → StrOutputParser → answer
 ```
 
----
-
-## 5. Управление ресурсами
-
-### 5.1. VRAM стратегия
-
+### Agent
 ```
-┌─────────────────────────────────────────────────┐
-│           RTX 5070 — 12 ГБ VRAM                 │
-│                                                 │
-│  Сценарий A (интерактив):                       │
-│  ┌────────────────────────────────────┐         │
-│  │  Model: 5 ГБ  │  Context: 2 ГБ     │         │
-│  │  (qwen3:8b)   │  (32K tokens)      │         │
-│  └────────────────────────────────────┘         │
-│  Свободно: ~5 ГБ                                │
-│                                                 │
-│  Сценарий B (качество + offload):               │
-│  ┌────────────────────────────────────┐         │
-│  │  VRAM: 12 ГБ  │  RAM: 7 ГБ (offload)│        │
-│  │  (qwen3-coder:30b-a3b, 19 ГБ)      │         │
-│  └────────────────────────────────────┘         │
-│  Свободно: 0 ГБ VRAM                            │
-│                                                 │
-│  Сценарий C (RAG):                              │
-│  ┌────────────────────────────────────┐         │
-│  │  Embed: 0.3 ГБ │  Gen: 5 ГБ        │         │
-│  │  (nomic)       │  (qwen3:8b)       │         │
-│  └────────────────────────────────────┘         │
-│  Свободно: ~6.7 ГБ                              │
-└─────────────────────────────────────────────────┘
+agent_workflow.py "question"
+  → create_react_agent(ChatOllama, [calculate, echo])
+  → LLM decides tool call
+  → Tool execution
+  → LLM generates final answer
 ```
 
-### 5.2. RAM стратегия
+## Security Layers
 
-| Компонент | RAM | Условие |
-|-----------|-----|---------|
-| Ollama (runtime) | 1-2 ГБ | Постоянно |
-| Docker Desktop + WSL2 | 4-8 ГБ | Постоянно |
-| Qdrant | 1-2 ГБ | Постоянно |
-| Open WebUI | 0.5-1 ГБ | По необходимости |
-| VS Code | 1-2 ГБ | Постоянно |
-| LiteLLM | 0.2-0.5 ГБ | Постоянно |
-| CPU offload (модели) | 0-15 ГБ | При больших моделях |
-| **Итого базово** | ~10-15 ГБ | |
-| **Доступно для offload** | ~45-50 ГБ | |
+1. **Network binding** — all services on `127.0.0.1` only
+2. **Firewall** — 6 inbound block rules (11434, 4000, 6333, 6334, 8080, 8000)
+3. **API auth** — LiteLLM `master_key` required for all requests
+4. **Secrets encryption** — SOPS + age, `.secrets.yaml` encrypted at rest
+5. **Git hygiene** — `.gitignore` excludes `.secrets.yaml`, `*.key`, `.env`, `.venv/`
 
-### 5.5. Дисковая стратегия
+## Environment Variables
 
-| Диск | Содержимое | Причина |
-|------|-----------|---------|
-| C: (NVMe) | ОС, Docker, Ollama модели, Python envs, инструменты | Скорость загрузки моделей в VRAM |
-| D: (HDD) | Проекты, бэкапы, датасеты, архивы | Объём, не критична скорость |
-| D:\Projects\ai | Репозиторий AI Workstation (конфиги, скрипты, доки) | Проекты на HDD |
+| Variable | Scope | Value |
+|----------|-------|-------|
+| `OLLAMA_HOST` | User | `127.0.0.1:11434` |
+| `OLLAMA_MODELS` | User | `C:\Users\egork\AppData\Local\Programs\Ollama` |
+| `SOPS_AGE_KEY_FILE` | Runtime | `~/.config/sops/age/keys.txt` |
+| `LITELLM_API_KEY` | Runtime (from SOPS) | `sk-...` (в .secrets.yaml) |
+| `PYTHONUTF8` | Runtime (start-litellm.bat) | `1` |
+| `PYTHONIOENCODING` | Runtime (start-litellm.bat) | `utf-8` |
+| `CONTINUE_API_KEY` | User/Process | Same as LITELLM_API_KEY |
 
-**Ollama модели на NVMe:**
-```
-OLLAMA_MODELS=C:\Users\egork\.ollama\models (на NVMe по умолчанию)
-```
-
----
-
-## 6. Жизненный цикл моделей
+## PATH (User scope)
 
 ```
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Pull    │───►│  Load    │───►│  Serve   │───►│  Unload  │
-│ (download│    │ (VRAM +  │    │ (inference│    │ (free    │
-│  to NVMe)│    │  RAM)    │    │  requests)│    │  VRAM)   │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-     │                                                │
-     │           ┌──────────┐                         │
-     └──────────►│  Update  │◄────────────────────────┘
-                 │ (re-pull)│
-                 └──────────┘
-                      │
-                 ┌──────────┐
-                 │  Remove  │
-                 │ (rm)     │
-                 └──────────┘
+C:\Tools\age\age
+C:\Tools\sops
+C:\Tools\qdrant
 ```
 
-| Этап | Команда | Триггер |
-|------|---------|---------|
-| Pull | `ollama pull <model>` | Установка / обновление |
-| Load | Автоматически при первом запросе | Запрос через API |
-| Serve | Ollama держит модель в VRAM | Пока активна |
-| Unload | `ollama stop <model>` или таймаут | Неиспользование / нехватка VRAM |
-| Update | `ollama pull <model>` (обновляет digest) | Скрипт обслуживания |
-| Remove | `ollama rm <model>` | Очистка / смена модели |
+## Configuration Files
 
----
+### config/litellm/config.yaml
 
-## 7. Конфигурация сервисов
+Роутинг 11 моделей через алиасы (chat-low, coder-medium, etc.) на Ollama. Master key из `os.environ/LITELLM_API_KEY`. Request timeout: 300s. `drop_params: true`.
 
-### 7.1. Ollama
+### config/qdrant/qdrant.yaml
 
-```env
-OLLAMA_HOST=127.0.0.1:11434
-OLLAMA_MODELS=C:\Users\egork\.ollama\models
-OLLAMA_KEEP_ALIVE=10m
-OLLAMA_NUM_PARALLEL=1
-OLLAMA_MAX_LOADED_MODELS=2
+Host: `127.0.0.1`, HTTP: 6333, gRPC: 6334. Storage: `./storage`.
+
+### .sops.yaml
+
+Regex `\.secrets\.yaml$` → age recipient `age174mut7mmj64wxvjhkpnl7fc06egzwu4kfxxjeufqj837dlkflc0qhcetdh`.
+
+### ~/.continue/config.json
+
+6 моделей (chat/coder × low/medium/high) + tabAutocompleteModel (coder-low) + embeddingsProvider (embed-low). All via `http://127.0.0.1:4000/v1` with `CONTINUE_API_KEY`.
+
+### .vscode/settings.json
+
+Python interpreter: `.venv\Scripts\python.exe`. UTF-8. EOL: LF. Search/file excludes for `.venv`, `site`, `__pycache__`.
+
+### .devcontainer/devcontainer.json
+
+Docker dev container with Python 3.10 + Node LTS. Extensions: Python, Pylance, Continue. Forward ports: 4000, 11434. `OLLAMA_HOST=host.docker.internal:11434`.
+
+### mkdocs.yml
+
+Material theme, Russian language, dark/light toggle, 7 pages in nav.
+
+### .gitignore
+
+Excludes: `.venv/`, `logs/`, `backup/`, `site/`, `.secrets.yaml`, `*.key`, `.env`, `.obsidian/`, model files (`*.gguf`, `*.safetensors`), `data/qdrant/*`, `data/open-webui/*`.
+
+### .gitattributes
+
+LF by default, CRLF for `*.ps1`, `*.bat`, `*.cmd`. Binary for images, archives, executables, models. Git LFS for `*.gguf`, `*.safetensors`.
+
+### .python-version
+
 ```
-
-### 7.2. LiteLLM Proxy
-
-```yaml
-# litellm_config.yaml
-model_list:
-  - model_name: chat-fast
-    litellm_params:
-      model: ollama/qwen3:8b
-      api_base: http://127.0.0.1:11434
-  - model_name: chat-quality
-    litellm_params:
-      model: ollama/qwen2.5:32b
-      api_base: http://127.0.0.1:11434
-  - model_name: coder-fast
-    litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: http://127.0.0.1:11434
-  - model_name: coder-quality
-    litellm_params:
-      model: ollama/qwen3-coder:30b-a3b
-      api_base: http://127.0.0.1:11434
-  - model_name: vision
-    litellm_params:
-      model: ollama/qwen2.5vl:7b
-      api_base: http://127.0.0.1:11434
-  - model_name: embeddings
-    litellm_params:
-      model: ollama/nomic-embed-text
-      api_base: http://127.0.0.1:11434
-
-litellm_settings:
-  drop_params: true
-  request_timeout: 300
-
-general_settings:
-  master_key: sk-litellm-<SOPS_ENCRYPTED>
+3.10
 ```
-
-### 7.3. Docker Compose (сервисы)
-
-```yaml
-# docker-compose.yml (структура)
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports: ["127.0.0.1:6333:6333", "127.0.0.1:6334:6334"]
-    volumes: ["./data/qdrant:/qdrant/storage"]
-    environment:
-      QDRANT__SERVICE__HOST: "127.0.0.1"
-
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main
-    ports: ["127.0.0.1:8080:8080"]
-    environment:
-      OLLAMA_BASE_URL: "http://host.docker.internal:11434"
-      HOST: "127.0.0.1"
-    volumes: ["./data/open-webui:/app/backend/data"]
-    depends_on: [qdrant]
-```
-
----
-
-## 8. Стратегия восстановления
-
-### 8.1. Компоненты и их восстановление
-
-| Компонент | Время восстановления | Метод |
-|-----------|---------------------|-------|
-| Ollama | <1 мин | Перезапуск сервиса |
-| LiteLLM | <30 сек | Перезапуск процесса |
-| Qdrant | <1 мин | Docker restart (данные в volume) |
-| Open WebUI | <1 мин | Docker restart |
-| Модели | <5 мин | `ollama pull` из кэша или репозитория |
-| Конфиги | <1 мин | `git checkout` из репозитория |
-| Секреты | <1 мин | SOPS decrypt из git + age key |
-
-### 8.2. Backup стратегия
-
-| Что | Где | Частота | Метод |
-|-----|-----|---------|-------|
-| Конфиги + скрипты + доки | D:\Projects\ai (git) | На каждое изменение | git commit + push (local/remote) |
-| Qdrant data | ./data/qdrant | Еженедельно | robocopy на D: |
-| Open WebUI data | ./data/open-webui | Еженедельно | robocopy на D: |
-| age key | ~/.config/sops/age/ | Однократно + при ротации | Ручное копирование на безопасный носитель |
-| Ollama models | ~/.ollama/models | При установке новых | Список моделей в git, pull при восстановлении |
-
----
-
-*Документ основан на Requirements.md и AI-Workstation.md.
-Дата: 2026-07-17.*
