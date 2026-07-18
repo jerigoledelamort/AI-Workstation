@@ -1,60 +1,60 @@
 # AI Workstation
 
-Локальная AI-станция для разработки ПО. Полностью локальная, без облачных API.
+Р›РѕРєР°Р»СЊРЅР°СЏ AI-СЃС‚Р°РЅС†РёСЏ РґР»СЏ СЂР°Р·СЂР°Р±РѕС‚РєРё РџРћ. РџРѕР»РЅРѕСЃС‚СЊСЋ Р»РѕРєР°Р»СЊРЅР°СЏ, Р±РµР· РѕР±Р»Р°С‡РЅС‹С… API.
 
 ## Quick Start
 
 ```powershell
-# Запуск всех сервисов
+# Р—Р°РїСѓСЃРє РІСЃРµС… СЃРµСЂРІРёСЃРѕРІ
 .\scripts\setup\start-all.ps1
 
-# Проверка
+# РџСЂРѕРІРµСЂРєР°
 .\scripts\monitoring\health-check.ps1
 
-# Остановка
+# РћСЃС‚Р°РЅРѕРІРєР°
 .\scripts\setup\stop-all.ps1
 ```
 
-## Сервисы
+## РЎРµСЂРІРёСЃС‹
 
-| Сервис | Порт | Назначение |
+| РЎРµСЂРІРёСЃ | РџРѕСЂС‚ | РќР°Р·РЅР°С‡РµРЅРёРµ |
 |--------|------|------------|
-| Ollama | 127.0.0.1:11434 | Inference (11 моделей, ~97 ГБ) |
-| LiteLLM Proxy | 127.0.0.1:4000 | API gateway с auth |
-| Qdrant | 127.0.0.1:6333/6334 | Векторная БД для RAG |
-| MkDocs | 127.0.0.1:8000 | Документация |
+| Ollama | 127.0.0.1:11434 | Inference (11 РјРѕРґРµР»РµР№, ~97 Р“Р‘) |
+| LiteLLM Proxy | 127.0.0.1:4000 | API gateway СЃ auth |
+| Qdrant | 127.0.0.1:6333/6334 | Р’РµРєС‚РѕСЂРЅР°СЏ Р‘Р” РґР»СЏ RAG |
+| MkDocs | 127.0.0.1:8000 | Р”РѕРєСѓРјРµРЅС‚Р°С†РёСЏ |
 
-## Команды
+## РљРѕРјР°РЅРґС‹
 
-| Команда | Описание |
+| РљРѕРјР°РЅРґР° | РћРїРёСЃР°РЅРёРµ |
 |---------|----------|
-| `.\scripts\setup\start-all.ps1` | Запуск Ollama + Qdrant + LiteLLM |
-| `.\scripts\setup\stop-all.ps1` | Остановка всех сервисов |
-| `.\scripts\monitoring\health-check.ps1` | Health check всех сервисов |
-| `.\scripts\monitoring\vram-check.ps1` | Мониторинг VRAM/RAM |
-| `.\scripts\maintenance\update-models.ps1` | Обновление моделей Ollama |
-| `.\scripts\maintenance\cleanup-models.ps1` | Список моделей для очистки |
-| `.\scripts\backup\backup.ps1` | Резервное копирование конфигов |
-| `.\tests\test-security.ps1` | Аудит безопасности (10 проверок) |
-| `.\tests\test-inference.ps1` | Тест inference всех моделей |
-| `python -m mkdocs serve` | Локальная документация |
+| `.\scripts\setup\start-all.ps1` | Р—Р°РїСѓСЃРє Ollama + Qdrant + LiteLLM |
+| `.\scripts\setup\stop-all.ps1` | РћСЃС‚Р°РЅРѕРІРєР° РІСЃРµС… СЃРµСЂРІРёСЃРѕРІ |
+| `.\scripts\monitoring\health-check.ps1` | Health check РІСЃРµС… СЃРµСЂРІРёСЃРѕРІ |
+| `.\scripts\monitoring\vram-check.ps1` | РњРѕРЅРёС‚РѕСЂРёРЅРі VRAM/RAM |
+| `.\scripts\maintenance\update-models.ps1` | РћР±РЅРѕРІР»РµРЅРёРµ РјРѕРґРµР»РµР№ Ollama |
+| `.\scripts\maintenance\cleanup-models.ps1` | РЎРїРёСЃРѕРє РјРѕРґРµР»РµР№ РґР»СЏ РѕС‡РёСЃС‚РєРё |
+| `.\scripts\backup\backup.ps1` | Р РµР·РµСЂРІРЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ РєРѕРЅС„РёРіРѕРІ |
+| `.\tests\test-security.ps1` | РђСѓРґРёС‚ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё (10 РїСЂРѕРІРµСЂРѕРє) |
+| `.\tests\test-inference.ps1` | РўРµСЃС‚ inference РІСЃРµС… РјРѕРґРµР»РµР№ |
+| `python -m mkdocs serve` | Р›РѕРєР°Р»СЊРЅР°СЏ РґРѕРєСѓРјРµРЅС‚Р°С†РёСЏ |
 
-## RAG и агенты
+## RAG Рё Р°РіРµРЅС‚С‹
 
 ```powershell
-# Загрузить документ в Qdrant
+# Р—Р°РіСЂСѓР·РёС‚СЊ РґРѕРєСѓРјРµРЅС‚ РІ Qdrant
 .venv\Scripts\python.exe scripts\rag\rag_pipeline.py ingest <file_path>
 
-# Запрос по документам
+# Р—Р°РїСЂРѕСЃ РїРѕ РґРѕРєСѓРјРµРЅС‚Р°Рј
 .venv\Scripts\python.exe scripts\rag\rag_pipeline.py query "question"
 
-# Агент с tool calling
+# РђРіРµРЅС‚ СЃ tool calling
 .venv\Scripts\python.exe scripts\rag\agent_workflow.py "question"
 ```
 
-## Модели
+## РњРѕРґРµР»Рё
 
-11 моделей в 3 профилях VRAM. Подробности: [docs/ai-models.md](docs/ai-models.md).
+11 РјРѕРґРµР»РµР№ РІ 3 РїСЂРѕС„РёР»СЏС… VRAM. РџРѕРґСЂРѕР±РЅРѕСЃС‚Рё: [docs/ai-models.md](docs/ai-models.md).
 
 | Profile | Chat | Coding | Vision | Embeddings |
 |---------|------|--------|--------|------------|
@@ -62,51 +62,51 @@
 | Medium | qwen2.5:14b | deepseek-coder-v2:lite | qwen2.5vl:7b | bge-m3 |
 | High | qwen2.5:32b | qwen3-coder:30b | qwen2.5vl:32b | bge-m3 |
 
-## Безопасность
+## Р‘РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ
 
-- Все сервисы на `127.0.0.1` только
+- Р’СЃРµ СЃРµСЂРІРёСЃС‹ РЅР° `127.0.0.1` С‚РѕР»СЊРєРѕ
 - LiteLLM: API key auth (SOPS-encrypted)
-- 6 firewall правил (inbound block)
-- SOPS + age для секретов
-- `.gitignore` исключает секреты, ключи, `.env`
+- 6 firewall РїСЂР°РІРёР» (inbound block)
+- SOPS + age РґР»СЏ СЃРµРєСЂРµС‚РѕРІ
+- `.gitignore` РёСЃРєР»СЋС‡Р°РµС‚ СЃРµРєСЂРµС‚С‹, РєР»СЋС‡Рё, `.env`
 
-## Структура проекта
+## РЎС‚СЂСѓРєС‚СѓСЂР° РїСЂРѕРµРєС‚Р°
 
 ```
 ai/
-├── .secrets.yaml          # SOPS-зашифрованные секреты (gitignored)
-├── .sops.yaml             # SOPS config (age recipient)
-├── .gitignore             # Исключения
-├── .gitattributes         # Line endings + LFS
-├── .python-version        # 3.10
-├── pyproject.toml         # Зависимости
-├── uv.lock                # Lockfile
-├── mkdocs.yml             # MkDocs config
-├── config/
-│   ├── litellm/config.yaml  # Роутинг моделей
-│   └── qdrant/qdrant.yaml   # Qdrant config
-├── scripts/
-│   ├── setup/             # start/stop скрипты
-│   ├── monitoring/        # health-check, vram
-│   ├── maintenance/       # update/cleanup models
-│   ├── backup/            # backup
-│   └── rag/               # RAG pipeline + agent
-├── tests/                 # Security + inference тесты
-├── docs/                  # MkDocs страницы
-├── .vscode/settings.json  # VS Code config
-└── .devcontainer/         # DevContainer config
+в”њв”Ђв”Ђ .secrets.yaml          # SOPS-Р·Р°С€РёС„СЂРѕРІР°РЅРЅС‹Рµ СЃРµРєСЂРµС‚С‹ (gitignored)
+в”њв”Ђв”Ђ .sops.yaml             # SOPS config (age recipient)
+в”њв”Ђв”Ђ .gitignore             # РСЃРєР»СЋС‡РµРЅРёСЏ
+в”њв”Ђв”Ђ .gitattributes         # Line endings + LFS
+в”њв”Ђв”Ђ .python-version        # 3.10
+в”њв”Ђв”Ђ pyproject.toml         # Р—Р°РІРёСЃРёРјРѕСЃС‚Рё
+в”њв”Ђв”Ђ uv.lock                # Lockfile
+в”њв”Ђв”Ђ mkdocs.yml             # MkDocs config
+в”њв”Ђв”Ђ config/
+в”‚   в”њв”Ђв”Ђ litellm/config.yaml  # Р РѕСѓС‚РёРЅРі РјРѕРґРµР»РµР№
+в”‚   в””в”Ђв”Ђ qdrant/qdrant.yaml   # Qdrant config
+в”њв”Ђв”Ђ scripts/
+в”‚   в”њв”Ђв”Ђ setup/             # start/stop СЃРєСЂРёРїС‚С‹
+в”‚   в”њв”Ђв”Ђ monitoring/        # health-check, vram
+в”‚   в”њв”Ђв”Ђ maintenance/       # update/cleanup models
+в”‚   в”њв”Ђв”Ђ backup/            # backup
+в”‚   в””в”Ђв”Ђ rag/               # RAG pipeline + agent
+в”њв”Ђв”Ђ tests/                 # Security + inference С‚РµСЃС‚С‹
+в”њв”Ђв”Ђ docs/                  # MkDocs СЃС‚СЂР°РЅРёС†С‹
+в”њв”Ђв”Ђ .vscode/settings.json  # VS Code config
+в””в”Ђв”Ђ .devcontainer/         # DevContainer config
 ```
 
-## Документация
+## Р”РѕРєСѓРјРµРЅС‚Р°С†РёСЏ
 
-| Файл | Описание |
+| Р¤Р°Р№Р» | РћРїРёСЃР°РЅРёРµ |
 |------|----------|
-| [Architecture.md](Architecture.md) | Архитектура системы |
-| [DisasterRecovery.md](DisasterRecovery.md) | Восстановление без интернета |
-| [Troubleshooting.md](Troubleshooting.md) | Решение проблем |
-| [ROADMAP.md](ROADMAP.md) | План развития |
-| [CHANGELOG.md](CHANGELOG.md) | История изменений |
-| [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Известные проблемы |
+| [Architecture.md](Architecture.md) | РђСЂС…РёС‚РµРєС‚СѓСЂР° СЃРёСЃС‚РµРјС‹ |
+| [DisasterRecovery.md](DisasterRecovery.md) | Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ Р±РµР· РёРЅС‚РµСЂРЅРµС‚Р° |
+| [Troubleshooting.md](Troubleshooting.md) | Р РµС€РµРЅРёРµ РїСЂРѕР±Р»РµРј |
+| [ROADMAP.md](ROADMAP.md) | РџР»Р°РЅ СЂР°Р·РІРёС‚РёСЏ |
+| [CHANGELOG.md](CHANGELOG.md) | РСЃС‚РѕСЂРёСЏ РёР·РјРµРЅРµРЅРёР№ |
+| [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | РР·РІРµСЃС‚РЅС‹Рµ РїСЂРѕР±Р»РµРјС‹ |
 
 ## Hardware
 
