@@ -115,6 +115,28 @@ Workflow: `scripts/rag/agent_workflow.py`
 | Lockfile | `uv.lock` |
 | pyproject | `pyproject.toml` |
 
+### Autonomous Agent: Cline (VS Code Extension)
+
+| Parameter | Value |
+|-----------|-------|
+| Extension | `saoudrizwan.claude-dev` (Cline) |
+| Provider | OpenAI Compatible (LiteLLM) |
+| Base URL | `http://127.0.0.1:4000/v1` |
+| Model | `coder-low` (qwen2.5-coder:7b) |
+| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
+| Capabilities | File read/write, terminal, browser, MCP |
+
+### Autonomous Agent: Cline (VS Code Extension)
+
+| Parameter | Value |
+|-----------|-------|
+| Extension | `saoudrizwan.claude-dev` (Cline) |
+| Provider | OpenAI Compatible (LiteLLM) |
+| Base URL | `http://127.0.0.1:4000/v1` |
+| Model | `coder-low` (qwen2.5-coder:7b) |
+| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
+| Capabilities | File read/write, terminal, browser, MCP |
+
 ### Coding Agent: Aider 0.86.2
 
 | Parameter | Value |
@@ -141,6 +163,28 @@ Workflow: `scripts/rag/agent_workflow.py`
 | Data dir | D:\Projects\ai\data\open-webui\ |
 | Secret key | D:\Projects\ai\.webui_secret_key |
 | Launch | scripts/setup/start-webui.ps1 |
+
+### Autonomous Agent: Cline (VS Code Extension)
+
+| Parameter | Value |
+|-----------|-------|
+| Extension | `saoudrizwan.claude-dev` (Cline) |
+| Provider | OpenAI Compatible (LiteLLM) |
+| Base URL | `http://127.0.0.1:4000/v1` |
+| Model | `coder-low` (qwen2.5-coder:7b) |
+| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
+| Capabilities | File read/write, terminal, browser, MCP |
+
+### Autonomous Agent: Cline (VS Code Extension)
+
+| Parameter | Value |
+|-----------|-------|
+| Extension | `saoudrizwan.claude-dev` (Cline) |
+| Provider | OpenAI Compatible (LiteLLM) |
+| Base URL | `http://127.0.0.1:4000/v1` |
+| Model | `coder-low` (qwen2.5-coder:7b) |
+| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
+| Capabilities | File read/write, terminal, browser, MCP |
 
 ### Coding Agent: Aider 0.86.2
 

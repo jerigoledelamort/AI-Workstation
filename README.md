@@ -126,6 +126,66 @@ Unregister-ScheduledTask -TaskName 'AI-Workstation-AutoStart' -Confirm:$false
 
 
 
+
+
+## Cline - Autonomous AI Agent (VS Code)
+
+Cline - extension VS Code, autonomous AI agent for development. Works like AI assistant:
+reads files, writes code, executes commands, does refactoring.
+
+**Configured:**
+- Provider: OpenAI Compatible (LiteLLM)
+- Base URL: `http://127.0.0.1:4000/v1`
+- Model: `coder-low` (qwen2.5-coder:7b)
+- API Key: from SOPS
+
+**Usage:**
+
+1. Open VS Code
+2. Click Cline icon on sidebar (or Ctrl+Shift+P -> Cline)
+3. Open project folder (File -> Open Folder)
+4. Write task in chat
+5. Cline reads files, proposes changes, applies them
+6. Confirm or reject each action
+
+**Change model** in Cline settings:
+- `coder-low` - qwen2.5-coder:7b (fast, default)
+- `coder-medium` - deepseek-coder-v2:lite (more accurate)
+- `coder-high` - qwen3-coder:30b (best quality, slow)
+
+**Config:** `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_api_config.json`
+
+
+
+
+## Cline - Autonomous AI Agent (VS Code)
+
+Cline - extension VS Code, autonomous AI agent for development. Works like AI assistant:
+reads files, writes code, executes commands, does refactoring.
+
+**Configured:**
+- Provider: OpenAI Compatible (LiteLLM)
+- Base URL: `http://127.0.0.1:4000/v1`
+- Model: `coder-low` (qwen2.5-coder:7b)
+- API Key: from SOPS
+
+**Usage:**
+
+1. Open VS Code
+2. Click Cline icon on sidebar (or Ctrl+Shift+P -> Cline)
+3. Open project folder (File -> Open Folder)
+4. Write task in chat
+5. Cline reads files, proposes changes, applies them
+6. Confirm or reject each action
+
+**Change model** in Cline settings:
+- `coder-low` - qwen2.5-coder:7b (fast, default)
+- `coder-medium` - deepseek-coder-v2:lite (more accurate)
+- `coder-high` - qwen3-coder:30b (best quality, slow)
+
+**Config:** `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_api_config.json`
+
+
 ## Aider — AI Coding Agent
 
 Aider — CLI-инструмент для AI-парного программирования. Работает с git-репозиториями,
