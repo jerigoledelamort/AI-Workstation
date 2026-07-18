@@ -52,7 +52,18 @@ if ($proc -and -not $proc.HasExited) {
     Log 'ERROR: LiteLLM failed to start'
 }
 
-# 4. Open WebUI (via .bat wrapper for reliable env vars)
+
+# 4. Router Proxy (auto-routing for Cline)
+Log 'Starting Router Proxy...'
+$proc = Start-Process 'D:\Projects\ai\scripts\setup\start-router.bat' -WindowStyle Hidden -PassThru
+Start-Sleep -Seconds 5
+if ($proc -and -not $proc.HasExited) {
+    Log "Router Proxy started (PID $($proc.Id))"
+} else {
+    Log 'ERROR: Router Proxy failed to start'
+}
+
+# 5. Open WebUI (via .bat wrapper for reliable env vars)
 Log 'Starting Open WebUI...'
 $proc = Start-Process 'D:\Projects\ai\scripts\setup\start-webui.bat' -WindowStyle Hidden -PassThru
 Start-Sleep -Seconds 30
@@ -68,6 +79,7 @@ $services = @(
     @{Name='Ollama'; Url='http://127.0.0.1:11434/api/tags'},
     @{Name='LiteLLM'; Url='http://127.0.0.1:4000/health/liveliness'},
     @{Name='Qdrant'; Url='http://127.0.0.1:6333/healthz'},
+    @{Name='Router'; Url='http://127.0.0.1:4001/health'}
     @{Name='Open WebUI'; Url='http://127.0.0.1:8080/health'}
 )
 foreach ($s in $services) {
