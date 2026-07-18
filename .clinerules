@@ -1,0 +1,105 @@
+# AI Workstation — Global Agent Rules
+
+## Project Setup Automation
+
+When the user opens a new project folder in VS Code (any folder under `D:\Projects\`), automatically run the project setup helper:
+
+```powershell
+python D:\Projects\ai\scripts\setup_helper.py D:\Projects\<project_name>
+```
+
+The script will automatically:
+1. Detect project type (reverse, python, javascript, cpp, generic)
+2. Create Obsidian vault at `.obsidian-memory/`
+3. Create `.clinerules` with project-specific rules
+4. Initialize git repository
+5. Create project documentation template
+
+**Examples:**
+- User opens `D:\Projects\reverse-target` → script detects type, creates vault
+- User opens `D:\Projects\myapp` → script creates generic project structure
+- User opens `D:\Projects\game-reversing` → if contains `.elf`, `.bin`, `.so` files → detects as "reverse"
+
+## Obsidian Memory Integration
+
+All projects have an Obsidian vault at `.obsidian-memory/`:
+- `notes/` — general notes
+- `architecture/` — architecture docs, Mermaid diagrams
+- `decisions/` — ADR (Architecture Decision Records)
+- `research/` — research findings, analysis results
+- `rules/` — project rules and conventions
+- `progress/` — daily/weekly progress logs
+- `issues/` — known issues, bugs, TODOs
+- `_templates/` — note templates
+
+After each work session, update the progress log:
+```
+Append to: .obsidian-memory/progress/progress-log.md
+Format: ## YYYY-MM-DD HH:MM — summary
+```
+
+## Reverse Engineering Projects
+
+For projects containing binaries (`.elf`, `.bin`, `.so`, `.dll`):
+1. Run GhidraMCP bridge before analysis
+2. Use GhidraMCP tools for decompilation
+3. Document all findings in `.obsidian-memory/research/`
+4. Track xrefs (cross-references) for important functions
+5. Identify standard library calls and obfuscation patterns
+
+## Night-long Analysis
+
+For extended analysis sessions:
+- Process functions in batches (10-20 at a time)
+- Update progress log after each batch
+- Save state in `.obsidian-memory/progress/` between sessions
+- Use `.clinerules` for project-specific rules
+
+## Model Selection (via Router)
+
+Use the AI Router at `http://127.0.0.1:4001/v1` for model routing:
+- `auto` — automatic complexity-based routing
+- `preset-light` — fast (qwen2.5-coder:7b)
+- `preset-medium` — balanced (deepseek-coder-v2:lite)
+- `preset-heavy` — powerful (qwen3-coder:30b)
+
+## API Configuration
+
+- LiteLLM Proxy: `http://127.0.0.1:4000/v1`
+- Router Proxy: `http://127.0.0.1:4001/v1` (recommended)
+- Open WebUI: `http://127.0.0.1:8080`
+- Qdrant: `http://127.0.0.1:6333`
+
+## Services Management
+
+All services start automatically at Windows logon via Task Scheduler:
+- Ollama (models)
+- LiteLLM Proxy (API gateway)
+- Qdrant (vector database)
+- Router Proxy (model routing)
+- Open WebUI (chat interface)
+
+To check health:
+```powershell
+D:\Projects\ai\scripts\monitoring\health-check.ps1
+```
+
+To stop all services:
+```powershell
+D:\Projects\ai\scripts\setup\stop-all.ps1
+```
+
+## Git Workflow
+
+- All projects use git
+- Commit after completing a task
+- Use descriptive commit messages
+- Branch for experiments
+
+## Documentation
+
+- Use Obsidian wikilinks: `[[Note Title]]`
+- Use frontmatter (YAML) with `created` and `tags`
+- Use Mermaid for diagrams
+- One topic per file
+- Keep files under 500 lines
