@@ -1,4 +1,7 @@
-﻿# Stop all AI Workstation services
+# Stop all AI Workstation services
+Write-Host "Stopping Open WebUI..." -ForegroundColor Cyan
+Get-Process -Name "python" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match "open_webui" } | Stop-Process -Force
+
 Write-Host "Stopping LiteLLM..." -ForegroundColor Cyan
 Get-Process -Name "litellm" -ErrorAction SilentlyContinue | Stop-Process -Force
 

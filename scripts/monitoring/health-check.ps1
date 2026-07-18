@@ -1,8 +1,9 @@
-﻿# AI Workstation Health Check
+# AI Workstation Health Check
 $services = @(
-    @{ Name="Ollama"; Url="http://127.0.0.1:11434/api/tags"; Type="Rest" },
-    @{ Name="LiteLLM"; Url="http://127.0.0.1:4000/health/liveliness"; Type="Rest" },
-    @{ Name="Qdrant"; Url="http://127.0.0.1:6333/healthz"; Type="Rest" }
+    @{ Name="Ollama"; Url="http://127.0.0.1:11434/api/tags" },
+    @{ Name="LiteLLM"; Url="http://127.0.0.1:4000/health/liveliness" },
+    @{ Name="Qdrant"; Url="http://127.0.0.1:6333/healthz" },
+    @{ Name="Open WebUI"; Url="http://127.0.0.1:8080/health" }
 )
 $allOk = $true
 foreach ($s in $services) {

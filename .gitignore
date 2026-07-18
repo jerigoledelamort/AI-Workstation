@@ -1,4 +1,4 @@
-﻿# === Python ===
+# === Python ===
 __pycache__/
 *.py[cod]
 *$py.class
@@ -12,6 +12,7 @@ build/
 
 # === uv ===
 .venv/
+.venv-webui/
 venv/
 
 # === IDE ===
