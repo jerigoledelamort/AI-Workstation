@@ -1,29 +1,31 @@
 # Disaster Recovery
 
-РџРѕР»РЅРѕРµ СЂСѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЋ AI Workstation СЃ РЅСѓР»СЏ Р±РµР· РґРѕСЃС‚СѓРїР° Рє РёРЅС‚РµСЂРЅРµС‚Сѓ.
+Полное руководство по восстановлению AI Workstation с нуля без доступа к интернету.
 
-> **Р’Р°Р¶РЅРѕ:** Р’СЃРµ Р±РёРЅР°СЂРЅРёРєРё Рё РјРѕРґРµР»Рё РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ Р·Р°СЂР°РЅРµРµ СЃРѕС…СЂР°РЅРµРЅС‹ РЅР° Р»РѕРєР°Р»СЊРЅРѕРј РЅРѕСЃРёС‚РµР»Рµ.
-> Р РµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РїРµСЂРёРѕРґРёС‡РµСЃРєРѕРµ СЂРµР·РµСЂРІРЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ РІ `D:\Projects\ai\backup\`.
+> **Важно:** Все бинарники и модели должны быть заранее сохранены на локальном носителе.
+> Рекомендуется периодическое резервное копирование в `D:\Projects\ai\backup\`.
 
-## РџСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Рµ С‚СЂРµР±РѕРІР°РЅРёСЏ
+## Предварительные требования
 
-### Р›РѕРєР°Р»СЊРЅС‹Рµ Р°СЂС‚РµС„Р°РєС‚С‹ (РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃРѕС…СЂР°РЅРµРЅС‹ Р·Р°СЂР°РЅРµРµ)
+### Локальные артефакты (должны быть сохранены заранее)
 
-| РђСЂС‚РµС„Р°РєС‚ | РџСѓС‚СЊ | Р Р°Р·РјРµСЂ |
+| Артефакт | Путь | Размер |
 |----------|------|--------|
-| Git СЂРµРїРѕР·РёС‚РѕСЂРёР№ | `D:\Projects\ai\` | ~50 РњР‘ (Р±РµР· .venv) |
-| Python 3.10.10 | `C:\Python310\` РёР»Рё СѓСЃС‚Р°РЅРѕРІС‰РёРє | ~30 РњР‘ |
-| uv 0.11.29 | `C:\Users\egork\.local\bin\uv.exe` | ~15 РњР‘ |
-| Ollama 0.32.0 | `C:\Users\egork\AppData\Local\Programs\Ollama\` | ~500 РњР‘ |
-| Ollama models | `C:\Users\egork\AppData\Local\Programs\Ollama\` | ~97 Р“Р‘ |
-| SOPS 3.13.2 | `C:\Tools\sops\sops.exe` | ~30 РњР‘ |
-| age 1.3.1 | `C:\Tools\age\age\` | ~5 РњР‘ |
-| Qdrant 1.18.3 | `C:\Tools\qdrant\qdrant.exe` | ~81 РњР‘ |
-| age keypair | `~/.config/sops/age/keys.txt` | <1 РљР‘ |
-| .secrets.yaml | `D:\Projects\ai\.secrets.yaml` | <1 РљР‘ |
-| Continue config | `~/.continue/config.json` | <1 РљР‘ |
+| Git репозиторий | `D:\Projects\ai\` | ~50 МБ (без .venv) |
+| Python 3.10.10 | `C:\Python310\` или установщик | ~30 МБ |
+| uv 0.11.29 | `C:\Users\egork\.local\bin\uv.exe` | ~15 МБ |
+| Ollama 0.32.0 | `C:\Users\egork\AppData\Local\Programs\Ollama\` | ~500 МБ |
+| Ollama models | `C:\Users\egork\AppData\Local\Programs\Ollama\` | ~97 ГБ |
+| SOPS 3.13.2 | `C:\Tools\sops\sops.exe` | ~30 МБ |
+| age 1.3.1 | `C:\Tools\age\age\` | ~5 МБ |
+| Qdrant 1.18.3 | `C:\Tools\qdrant\qdrant.exe` | ~81 МБ |
+| Open WebUI 0.10.2 | `D:\Projects\ai\.venv-webui\` | ~500 МБ |
+| Python 3.12.13 | uv-managed (`uv python install 3.12`) | ~25 МБ |
+| age keypair | `~/.config/sops/age/keys.txt` | <1 КБ |
+| .secrets.yaml | `D:\Projects\ai\.secrets.yaml` | <1 КБ |
+| Continue config | `~/.continue/config.json` | <1 КБ |
 
-### РЎРєР°С‡Р°С‚СЊ Р·Р°СЂР°РЅРµРµ (РґР»СЏ offline-СѓСЃС‚Р°РЅРѕРІРєРё)
+### Скачать заранее (для offline-установки)
 
 | Tool | URL | Version |
 |------|-----|---------|
@@ -37,115 +39,115 @@
 | Continue extension | VS Code marketplace (offline: .vsix file) | v2.0.0 |
 | Open WebUI | `pip install open-webui` (requires Python >=3.11) | 0.10.2 |
 
-## РџСЂРѕС†РµРґСѓСЂР° РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ (РїРѕР»РЅР°СЏ)
+## Процедура восстановления (полная)
 
-### РЁР°Рі 1. Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ
+### Шаг 1. Восстановление инструментов
 
 #### 1.1. Python 3.10
 
 ```powershell
-# РЈСЃС‚Р°РЅРѕРІРёС‚СЊ Python 3.10.10 (РёР· СЃРѕС…СЂР°РЅС‘РЅРЅРѕРіРѕ СѓСЃС‚Р°РЅРѕРІС‰РёРєР°)
-# РЈР±РµРґРёС‚СЊСЃСЏ, С‡С‚Рѕ python --version == 3.10.10
+# Установить Python 3.10.10 (из сохранённого установщика)
+# Убедиться, что python --version == 3.10.10
 python --version
 ```
 
 #### 1.2. uv
 
 ```powershell
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ uv.exe РІ ~/.local/bin/
-# РР»Рё СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РёР· СЃРѕС…СЂР°РЅС‘РЅРЅРѕРіРѕ zip
-uv --version  # РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ 0.11.29
+# Восстановить uv.exe в ~/.local/bin/
+# Или установить из сохранённого zip
+uv --version  # должно быть 0.11.29
 ```
 
 #### 1.3. Ollama
 
 ```powershell
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ C:\Users\egork\AppData\Local\Programs\Ollama\
-# Р’РєР»СЋС‡Р°СЏ models/ РґРёСЂРµРєС‚РѕСЂРёСЋ (~97 Р“Р‘)
+# Восстановить C:\Users\egork\AppData\Local\Programs\Ollama\
+# Включая models/ директорию (~97 ГБ)
 
-# РЈСЃС‚Р°РЅРѕРІРёС‚СЊ environment variables
+# Установить environment variables
 [Environment]::SetEnvironmentVariable('OLLAMA_HOST', '127.0.0.1:11434', 'User')
 [Environment]::SetEnvironmentVariable('OLLAMA_MODELS', 'C:\Users\egork\AppData\Local\Programs\Ollama', 'User')
 
-# РџСЂРѕРІРµСЂРёС‚СЊ
+# Проверить
 ollama --version   # 0.32.0
-ollama list        # 11 РјРѕРґРµР»РµР№
+ollama list        # 11 моделей
 ```
 
 #### 1.4. SOPS
 
 ```powershell
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ C:\Tools\sops\sops.exe
-# Р”РѕР±Р°РІРёС‚СЊ РІ PATH
+# Восстановить C:\Tools\sops\sops.exe
+# Добавить в PATH
 $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
 [Environment]::SetEnvironmentVariable('PATH', "$userPath;C:\Tools\sops", 'User')
 
-# РџСЂРѕРІРµСЂРёС‚СЊ
+# Проверить
 & 'C:\Tools\sops\sops.exe' --version  # sops 3.13.2
 ```
 
 #### 1.5. age
 
 ```powershell
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ C:\Tools\age\age\ (age.exe, age-keygen.exe, age-inspect.exe)
-# Р”РѕР±Р°РІРёС‚СЊ РІ PATH
+# Восстановить C:\Tools\age\age\ (age.exe, age-keygen.exe, age-inspect.exe)
+# Добавить в PATH
 $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
 [Environment]::SetEnvironmentVariable('PATH', "$userPath;C:\Tools\age\age", 'User')
 
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ age keypair
-# РљР РРўРР§РќРћ: Р±РµР· keys.txt РЅРµРІРѕР·РјРѕР¶РЅРѕ СЂР°СЃС€РёС„СЂРѕРІР°С‚СЊ .secrets.yaml
+# Восстановить age keypair
+# КРИТИЧНО: без keys.txt невозможно расшифровать .secrets.yaml
 New-Item -ItemType Directory -Path "$env:USERPROFILE\.config\sops\age" -Force
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ keys.txt РёР· СЂРµР·РµСЂРІРЅРѕР№ РєРѕРїРёРё РІ ~/.config/sops/age/keys.txt
-# Р¤Р°Р№Р» СЃРѕРґРµСЂР¶РёС‚ РїСЂРёРІР°С‚РЅС‹Р№ РєР»СЋС‡. РќР• РєРѕРјРјРёС‚РёС‚СЊ РІ git.
+# Восстановить keys.txt из резервной копии в ~/.config/sops/age/keys.txt
+# Файл содержит приватный ключ. НЕ коммитить в git.
 
-# РџСЂРѕРІРµСЂРёС‚СЊ
+# Проверить
 & 'C:\Tools\age\age\age.exe' --version  # 1.3.1
 ```
 
 #### 1.6. Qdrant
 
 ```powershell
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ C:\Tools\qdrant\qdrant.exe
-# Р”РѕР±Р°РІРёС‚СЊ РІ PATH
+# Восстановить C:\Tools\qdrant\qdrant.exe
+# Добавить в PATH
 $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
 [Environment]::SetEnvironmentVariable('PATH', "$userPath;C:\Tools\qdrant", 'User')
 
-# РџСЂРѕРІРµСЂРёС‚СЊ
+# Проверить
 & 'C:\Tools\qdrant\qdrant.exe' --version  # 1.18.3
 ```
 
-### РЁР°Рі 2. Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РїСЂРѕРµРєС‚Р°
+### Шаг 2. Восстановление проекта
 
 ```powershell
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ git СЂРµРїРѕР·РёС‚РѕСЂРёР№
+# Восстановить git репозиторий
 cd D:\Projects
-# Р•СЃР»Рё РµСЃС‚СЊ backup вЂ” СЂР°СЃРїР°РєРѕРІР°С‚СЊ
-# Р•СЃР»Рё РµСЃС‚СЊ git remote вЂ” git clone
+# Если есть backup — распаковать
+# Если есть git remote — git clone
 
 cd D:\Projects\ai
 
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ .secrets.yaml (РёР· СЂРµР·РµСЂРІРЅРѕР№ РєРѕРїРёРё, РќР• РёР· git)
-# Р¤Р°Р№Р» gitignored, РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СЃРѕС…СЂР°РЅС‘РЅ РѕС‚РґРµР»СЊРЅРѕ
+# Восстановить .secrets.yaml (из резервной копии, НЕ из git)
+# Файл gitignored, должен быть сохранён отдельно
 
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ ~/.continue/config.json (РёР· СЂРµР·РµСЂРІРЅРѕР№ РєРѕРїРёРё)
+# Восстановить ~/.continue/config.json (из резервной копии)
 ```
 
-### РЁР°Рі 3. Python РѕРєСЂСѓР¶РµРЅРёРµ
+### Шаг 3. Python окружение
 
 ```powershell
 cd D:\Projects\ai
 
-# РЎРѕР·РґР°С‚СЊ venv
+# Создать venv
 uv venv .venv --python 3.10
 
-# РЈСЃС‚Р°РЅРѕРІРёС‚СЊ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё
+# Установить зависимости
 uv sync
 
-# РџСЂРѕРІРµСЂРёС‚СЊ
+# Проверить
 & '.venv\Scripts\python.exe' -c "import litellm; import langchain; import qdrant_client; print('OK')"
 ```
 
-### РЁР°Рі 4. Firewall РїСЂР°РІРёР»Р°
+### Шаг 4. Firewall правила
 
 ```powershell
 # 6 inbound block rules
@@ -163,133 +165,150 @@ foreach ($p in $ports) {
 }
 ```
 
-### РЁР°Рі 5. Р—Р°РїСѓСЃРє Рё РїСЂРѕРІРµСЂРєР°
+### Шаг 5. Запуск и проверка
 
 ```powershell
-# Р—Р°РїСѓСЃС‚РёС‚СЊ РІСЃРµ СЃРµСЂРІРёСЃС‹
+# Запустить все сервисы
 .\scripts\setup\start-all.ps1
 
-# РџСЂРѕРІРµСЂРёС‚СЊ
+# Проверить
 .\scripts\monitoring\health-check.ps1
-# РћР¶РёРґР°РµРјС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚: [OK] Ollama, [OK] LiteLLM, [OK] Qdrant
+# Ожидаемый результат: [OK] Ollama, [OK] LiteLLM, [OK] Qdrant
 
-# РђСѓРґРёС‚ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё
+# Аудит безопасности
 .\tests\test-security.ps1
-# РћР¶РёРґР°РµРјС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚: 10/10 PASS
+# Ожидаемый результат: 10/10 PASS
 
-# РўРµСЃС‚ inference
+# Тест inference
 .\tests\test-inference.ps1
-# РћР¶РёРґР°РµРјС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚: 6/6 PASS
+# Ожидаемый результат: 6/6 PASS
 ```
 
-### РЁР°Рі 6. VS Code + Continue
+### Шаг 6. VS Code + Continue
 
 ```powershell
-# РЈСЃС‚Р°РЅРѕРІРёС‚СЊ VS Code
-# РЈСЃС‚Р°РЅРѕРІРёС‚СЊ Continue extension (v2.0.0)
+# Установить VS Code
+# Установить Continue extension (v2.0.0)
 
-# РЈСЃС‚Р°РЅРѕРІРёС‚СЊ CONTINUE_API_KEY
-# Р Р°СЃС€РёС„СЂРѕРІР°С‚СЊ РёР· .secrets.yaml:
+# Установить CONTINUE_API_KEY
+# Расшифровать из .secrets.yaml:
 $env:SOPS_AGE_KEY_FILE = "$env:USERPROFILE\.config\sops\age\keys.txt"
 $decrypted = & 'C:\Tools\sops\sops.exe' --decrypt '.secrets.yaml'
 $apiKey = ($decrypted | Select-String 'LITELLM_API_KEY:').ToString() -replace '.*:\s*',''
 [Environment]::SetEnvironmentVariable('CONTINUE_API_KEY', $apiKey, 'User')
 
-# РџРµСЂРµР·Р°РїСѓСЃС‚РёС‚СЊ VS Code
+# Перезапустить VS Code
 ```
 
-## Р РµР·РµСЂРІРЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ
 
-### Р§С‚Рѕ РєРѕРїРёСЂРѕРІР°С‚СЊ СЂРµРіСѓР»СЏСЂРЅРѕ
+
+### Шаг 7. Автозапуск (Task Scheduler)
 
 ```powershell
-# РЎРєСЂРёРїС‚ СЂРµР·РµСЂРІРЅРѕРіРѕ РєРѕРїРёСЂРѕРІР°РЅРёСЏ
+# Пересоздать задачу автозапуска
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"D:\Projectsi\scripts\setup\start-all.ps1`""
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+Register-ScheduledTask -TaskName "AI-Workstation-AutoStart" -Action $action -Trigger $trigger -Settings $settings -Description "AI Workstation: start all services at logon"
+
+# Проверить
+Get-ScheduledTask -TaskName "AI-Workstation-AutoStart"
+# State должен быть Ready
+```
+
+
+## Резервное копирование
+
+### Что копировать регулярно
+
+```powershell
+# Скрипт резервного копирования
 .\scripts\backup\backup.ps1
 
-# Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ СЃРѕС…СЂР°РЅРёС‚СЊ РІСЂСѓС‡РЅСѓСЋ:
-# 1. ~/.config/sops/age/keys.txt (CRITICAL вЂ” Р±РµР· РЅРµРіРѕ РЅРµС‚ РґРѕСЃС‚СѓРїР° Рє СЃРµРєСЂРµС‚Р°Рј)
+# Дополнительно сохранить вручную:
+# 1. ~/.config/sops/age/keys.txt (CRITICAL — без него нет доступа к секретам)
 # 2. ~/.continue/config.json
 # 3. D:\Projects\ai\.secrets.yaml
-# 4. C:\Tools\ (sops, age, qdrant вЂ” РЅРµР±РѕР»СЊС€РёРµ Р±РёРЅР°СЂРЅРёРєРё)
-# 5. Git push РЅР° remote (РµСЃР»Рё РЅР°СЃС‚СЂРѕРµРЅ)
+# 4. C:\Tools\ (sops, age, qdrant — небольшие бинарники)
+# 5. Git push на remote (если настроен)
 ```
 
-### РљСЂРёС‚РёС‡РЅС‹Рµ С„Р°Р№Р»С‹ (РїРѕСЂСЏРґРѕРє РІР°Р¶РЅРѕСЃС‚Рё)
+### Критичные файлы (порядок важности)
 
-1. **age keys.txt** вЂ” Р±РµР· РЅРµРіРѕ РЅРµРІРѕР·РјРѕР¶РЅРѕ СЂР°СЃС€РёС„СЂРѕРІР°С‚СЊ СЃРµРєСЂРµС‚С‹
-2. **.secrets.yaml** вЂ” СЃРѕРґРµСЂР¶РёС‚ API РєР»СЋС‡Рё
-3. **Git СЂРµРїРѕР·РёС‚РѕСЂРёР№** вЂ” РІРµСЃСЊ РєРѕРґ Рё РєРѕРЅС„РёРіРё
-4. **Ollama models** вЂ” ~97 Р“Р‘, РґРѕР»РіРѕ СЃРєР°С‡РёРІР°С‚СЊ Р·Р°РЅРѕРІРѕ
-5. **~/.continue/config.json** вЂ” РєРѕРЅС„РёРіСѓСЂР°С†РёСЏ Continue
+1. **age keys.txt** — без него невозможно расшифровать секреты
+2. **.secrets.yaml** — содержит API ключи
+3. **Git репозиторий** — весь код и конфиги
+4. **Ollama models** — ~97 ГБ, долго скачивать заново
+5. **~/.continue/config.json** — конфигурация Continue
 
-### Р РµРєРѕРјРµРЅРґСѓРµРјР°СЏ СЃС‚СЂР°С‚РµРіРёСЏ
+### Рекомендуемая стратегия
 
-| Р§Р°СЃС‚РѕС‚Р° | Р§С‚Рѕ | РљСѓРґР° |
+| Частота | Что | Куда |
 |---------|-----|------|
-| Р•Р¶РµРЅРµРґРµР»СЊРЅРѕ | `backup.ps1` (РєРѕРЅС„РёРіРё) | `D:\Projects\ai\backup\` |
-| Р•Р¶РµРјРµСЃСЏС‡РЅРѕ | Git push | Remote (РїСЂРёРІР°С‚РЅС‹Р№ repo) |
-| РџРѕСЃР»Рµ РёР·РјРµРЅРµРЅРёР№ | age keys.txt | Р’РЅРµС€РЅРёР№ РЅРѕСЃРёС‚РµР»СЊ (USB) |
-| РџРѕСЃР»Рµ СѓСЃС‚Р°РЅРѕРІРєРё | Р’СЃРµ Р±РёРЅР°СЂРЅРёРєРё | Р’РЅРµС€РЅРёР№ HDD |
+| Еженедельно | `backup.ps1` (конфиги) | `D:\Projects\ai\backup\` |
+| Ежемесячно | Git push | Remote (приватный repo) |
+| После изменений | age keys.txt | Внешний носитель (USB) |
+| После установки | Все бинарники | Внешний HDD |
 
-## Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РѕС‚РґРµР»СЊРЅС‹С… РєРѕРјРїРѕРЅРµРЅС‚РѕРІ
+## Восстановление отдельных компонентов
 
-### РўРѕР»СЊРєРѕ Ollama
+### Только Ollama
 
 ```powershell
-# РћСЃС‚Р°РЅРѕРІРёС‚СЊ
+# Остановить
 Get-Process ollama | Stop-Process -Force
 
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ models/ РґРёСЂРµРєС‚РѕСЂРёСЋ
-# Р—Р°РїСѓСЃС‚РёС‚СЊ Р·Р°РЅРѕРІРѕ
+# Восстановить models/ директорию
+# Запустить заново
 Start-Process ollama -ArgumentList "serve" -WindowStyle Hidden
 ```
 
-### РўРѕР»СЊРєРѕ LiteLLM
+### Только LiteLLM
 
 ```powershell
-# РћСЃС‚Р°РЅРѕРІРёС‚СЊ
+# Остановить
 Get-Process litellm | Stop-Process -Force
 
-# РџРµСЂРµСЃРѕР·РґР°С‚СЊ venv РµСЃР»Рё РЅСѓР¶РЅРѕ
+# Пересоздать venv если нужно
 uv venv .venv --python 3.10
 uv sync
 
-# Р—Р°РїСѓСЃС‚РёС‚СЊ
+# Запустить
 .\scripts\setup\start-litellm.bat
 ```
 
-### РўРѕР»СЊРєРѕ Qdrant
+### Только Qdrant
 
 ```powershell
-# РћСЃС‚Р°РЅРѕРІРёС‚СЊ
+# Остановить
 Get-Process qdrant | Stop-Process -Force
 
-# Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ storage/ РµСЃР»Рё РЅСѓР¶РЅРѕ
-# Р—Р°РїСѓСЃС‚РёС‚СЊ
+# Восстановить storage/ если нужно
+# Запустить
 Start-Process '.\scripts\setup\start-qdrant.bat' -WindowStyle Minimized
 ```
 
-### РўРѕР»СЊРєРѕ СЃРµРєСЂРµС‚С‹ (РµСЃР»Рё keys.txt СѓС‚РµСЂСЏРЅ)
+### Только секреты (если keys.txt утерян)
 
-> **Р’РќРРњРђРќРР•:** Р•СЃР»Рё age keys.txt СѓС‚РµСЂСЏРЅ, СЃРµРєСЂРµС‚С‹ РЅРµРІРѕР·РјРѕР¶РЅРѕ РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ.
-> РќРµРѕР±С…РѕРґРёРјРѕ СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ РЅРѕРІС‹Р№ keypair Рё РїРµСЂРµСЃРѕР·РґР°С‚СЊ .secrets.yaml.
+> **ВНИМАНИЕ:** Если age keys.txt утерян, секреты невозможно восстановить.
+> Необходимо сгенерировать новый keypair и пересоздать .secrets.yaml.
 
 ```powershell
-# Р“РµРЅРµСЂР°С†РёСЏ РЅРѕРІРѕРіРѕ keypair
+# Генерация нового keypair
 & 'C:\Tools\age\age\age-keygen.exe' -o "$env:USERPROFILE\.config\sops\age\keys.txt"
 
-# РџРѕР»СѓС‡РёС‚СЊ public key
+# Получить public key
 $pubKey = (& 'C:\Tools\age\age\age-keygen.exe' -y "$env:USERPROFILE\.config\sops\age\keys.txt").Trim()
 
-# РћР±РЅРѕРІРёС‚СЊ .sops.yaml СЃ РЅРѕРІС‹Рј recipient
-# РЎРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ .secrets.yaml
+# Обновить .sops.yaml с новым recipient
+# Создать новый .secrets.yaml
 $secrets = @"
 LITELLM_API_KEY: sk-$( -join ((48..57)+(97..122) | Get-Random -Count 48 | ForEach-Object {[char]$_}))
 OLLAMA_API_BASE: http://127.0.0.1:11434
 "@
 $secrets | & 'C:\Tools\sops\sops.exe' --encrypt --age "$pubKey" /dev/stdin > .secrets.yaml
 
-# РћР±РЅРѕРІРёС‚СЊ CONTINUE_API_KEY
+# Обновить CONTINUE_API_KEY
 $decrypted = & 'C:\Tools\sops\sops.exe' --decrypt '.secrets.yaml'
 $apiKey = ($decrypted | Select-String 'LITELLM_API_KEY:').ToString() -replace '.*:\s*',''
 [Environment]::SetEnvironmentVariable('CONTINUE_API_KEY', $apiKey, 'User')

@@ -243,3 +243,50 @@ cd D:\Projects\ai
 ```
 
 Если порт занят: `mkdocs serve --dev-addr 127.0.0.1:8001`
+
+## Автозапуск
+
+### Сервисы не запускаются при логине
+
+```powershell
+# Проверить задачу
+Get-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
+
+# Проверить результат последнего запуска
+Get-ScheduledTaskInfo -TaskName 'AI-Workstation-AutoStart'
+
+# Запустить вручную
+Start-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
+
+# Проверить после запуска
+.\scripts\monitoring\health-check.ps1
+```
+
+**Возможные причины:**
+- Задача отключена -> `Enable-ScheduledTask`
+- `start-all.ps1` недоступен -> проверить путь
+- ExecutionPolicy блокирует -> задача использует `-ExecutionPolicy Bypass`
+- Сервисы конфликтуют -> `stop-all.ps1` затем `start-all.ps1`
+
+### Отключить автозапуск
+
+```powershell
+Disable-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
+```
+
+### Восстановить автозапуск
+
+```powershell
+Enable-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
+```
+
+### Пересоздать задачу
+
+```powershell
+Unregister-ScheduledTask -TaskName 'AI-Workstation-AutoStart' -Confirm:$false
+
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"D:\Projectsi\scripts\setup\start-all.ps1`""
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+Register-ScheduledTask -TaskName "AI-Workstation-AutoStart" -Action $action -Trigger $trigger -Settings $settings -Description "AI Workstation: start all services at logon"
+```

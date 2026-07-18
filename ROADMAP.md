@@ -1,56 +1,56 @@
 # Roadmap
 
-## РўРµРєСѓС‰РёР№ СЃС‚Р°С‚СѓСЃ (v0.1.0)
+## Текущий статус (v0.1.0)
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Project structure | вњ… Complete |
-| 2 | Base infrastructure | вњ… Complete |
-| 3 | AI inference layer | вњ… Complete |
-| 4 | Dev environment | вњ… Complete |
-| 5 | Security | вњ… Complete |
-| 6 | RAG & agents | вњ… Complete |
-| 7 | Automation | вњ… Complete |
-| 8 | Documentation | вњ… Complete |
-| 9 | Tests & audit | вњ… Complete |
+| 1 | Project structure | ✅ Complete |
+| 2 | Base infrastructure | ✅ Complete |
+| 3 | AI inference layer | ✅ Complete |
+| 4 | Dev environment | ✅ Complete |
+| 5 | Security | ✅ Complete |
+| 6 | RAG & agents | ✅ Complete |
+| 7 | Automation | ✅ Complete |
+| 8 | Documentation | ✅ Complete |
+| 9 | Tests & audit | ✅ Complete |
 
-## РџР»Р°РЅС‹ СЂР°Р·РІРёС‚РёСЏ
+## Планы развития
 
-### v0.2 вЂ” Open WebUI
+### v0.2 — Open WebUI ✅ ✅
 
-- РЈСЃС‚Р°РЅРѕРІРєР° Open WebUI (`pip install open-webui`)
-- РРЅС‚РµРіСЂР°С†РёСЏ СЃ LiteLLM Proxy
-- Web UI РґР»СЏ С‡Р°С‚Р° СЃ РјРѕРґРµР»СЏРјРё
-- РџРѕСЂС‚ 8080 (firewall rule СѓР¶Рµ СЃРѕР·РґР°РЅ)
+- Установка Open WebUI (`pip install open-webui`)
+- Интеграция с LiteLLM Proxy
+- Web UI для чата с моделями
+- Порт 8080 (firewall rule уже создан)
 
-### v0.3 вЂ” MCP Server
+### v0.3 — MCP Server
 
 - Model Context Protocol server
-- РРЅС‚РµРіСЂР°С†РёСЏ СЃ Continue
-- Tool calling РёР· VS Code
+- Интеграция с Continue
+- Tool calling из VS Code
 
-### v0.4 вЂ” Advanced RAG
+### v0.4 — Advanced RAG
 
-- РџРѕРґРґРµСЂР¶РєР° PDF, Markdown, РєРѕРґР°
-- Chunking СЃС‚СЂР°С‚РµРіРёРё (semantic, code-aware)
+- Поддержка PDF, Markdown, кода
+- Chunking стратегии (semantic, code-aware)
 - Hybrid search (dense + sparse)
-- Re-ranking РјРѕРґРµР»РµР№
+- Re-ranking моделей
 
-### v0.5 вЂ” Multi-agent Workflows
+### v0.5 — Multi-agent Workflows
 
 - LangGraph multi-agent orchestration
-- РЎРїРµС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅС‹Рµ Р°РіРµРЅС‚С‹ (coder, reviewer, tester)
+- Специализированные агенты (coder, reviewer, tester)
 - Workflow templates
 
-### v0.6 вЂ” Model Fine-tuning
+### v0.6 — Model Fine-tuning
 
-- LoRA fine-tuning С‡РµСЂРµР· Unsloth
-- Р›РѕРєР°Р»СЊРЅС‹Рµ РґР°С‚Р°СЃРµС‚С‹
+- LoRA fine-tuning через Unsloth
+- Локальные датасеты
 - Custom model registry
 
-### v1.0 вЂ” Production Ready
+### v1.0 — Production Ready
 
-- Systemd/Windows Service РґР»СЏ Р°РІС‚РѕР·Р°РїСѓСЃРєР°
+- Systemd/Windows Service для автозапуска
 - Monitoring dashboard (Prometheus + Grafana)
 - CI/CD pipeline
 - Full backup/restore automation
