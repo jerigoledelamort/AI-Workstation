@@ -70,6 +70,7 @@ data/open-webui/*
 
 # SOPS secrets
 .secrets.yaml
+.webui_secret_key
 
 # MkDocs build output
 site/
