@@ -36,10 +36,14 @@ $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 $env:SOPS_AGE_KEY_FILE = "$env:USERPROFILE\.config\sops\age\keys.txt"
 
+# Decrypt secrets via SOPS
 $decrypted = & 'C:\Tools\sops\sops.exe' --decrypt 'D:\Projects\ai\.secrets.yaml' 2>&1
 foreach ($line in $decrypted) {
-    if ($line -match '^(\w+):\s*(.+)$') {
-        Set-Item -Path "env:$($Matches[1])" -Value $Matches[2]
+    if ($line -match '^\s*(\w+):\s*["\x27]?(.+?)["\x27]?\s*$') {
+        $key = $Matches[1]
+        $val = $Matches[2].Trim('"').Trim("'")
+        Set-Item -Path "env:$key" -Value $val
+        Log "  Set $key = $($val.Substring(0, [Math]::Min(5, $val.Length)))..."
     }
 }
 Log 'Secrets decrypted'
@@ -52,10 +56,10 @@ if ($proc -and -not $proc.HasExited) {
     Log 'ERROR: LiteLLM failed to start'
 }
 
-
 # 4. Router Proxy (auto-routing for Cline)
 Log 'Starting Router Proxy...'
-$proc = Start-Process 'D:\Projects\ai\scripts\setup\start-router.bat' -WindowStyle Hidden -PassThru
+Start-Sleep -Seconds 3  # Wait for LiteLLM to be ready
+$proc = Start-Process 'D:\Projects\ai\.venv\Scripts\python.exe' -ArgumentList 'D:\Projects\ai\scripts\ai\router_proxy.py' -WindowStyle Hidden -PassThru
 Start-Sleep -Seconds 5
 if ($proc -and -not $proc.HasExited) {
     Log "Router Proxy started (PID $($proc.Id))"
@@ -73,15 +77,13 @@ if ($proc -and -not $proc.HasExited) {
     Log 'ERROR: Open WebUI failed to start'
 }
 
-# Verify
+# Verify all services
 Log 'Verifying services...'
 $services = @(
     @{Name='Ollama'; Url='http://127.0.0.1:11434/api/tags'},
     @{Name='LiteLLM'; Url='http://127.0.0.1:4000/health/liveliness'},
     @{Name='Qdrant'; Url='http://127.0.0.1:6333/healthz'},
     @{Name='Router'; Url='http://127.0.0.1:4001/health'}
-    @{Name='Router'; Url='http://127.0.0.1:4001/health'}
-    @{Name='Open WebUI'; Url='http://127.0.0.1:8080/health'}
 )
 foreach ($s in $services) {
     try {
@@ -91,4 +93,14 @@ foreach ($s in $services) {
         Log "[FAIL] $($s.Name)"
     }
 }
+
+# Open WebUI is optional (slow startup)
+try {
+    Start-Sleep -Seconds 5
+    Invoke-RestMethod -Uri 'http://127.0.0.1:8080/health' -Method GET -TimeoutSec 10 | Out-Null
+    Log '[OK] Open WebUI'
+} catch {
+    Log '[SKIP] Open WebUI (not ready yet)'
+}
+
 Log '=== AutoStart complete ==='
