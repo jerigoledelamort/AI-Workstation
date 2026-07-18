@@ -3,6 +3,19 @@
 Все заметные изменения AI Workstation документированы здесь.
 Формат основан на [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] — 2026-07-18
+
+### Aider — AI Coding Agent
+- Aider 0.86.2 installed in `.venv` (via `uv pip install aider-chat`)
+- Connected to LiteLLM Proxy (OpenAI-compatible API)
+- Default model: `coder-low` (qwen2.5-coder:7b) for speed
+- `.aider.conf.yml` — config (model, api-base, edit-format=diff)
+- `.aider.model.settings.yml` — custom model parameters
+- `scripts/setup/aider.bat` — wrapper script
+- `OPENAI_API_KEY` set as permanent User env var
+- `.gitignore` — Aider history files excluded
+- Tested: file editing, SEARCH/REPLACE blocks working
+
 ## [0.2.1] — 2026-07-18
 
 ### Autostart

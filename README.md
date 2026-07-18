@@ -124,6 +124,42 @@ Unregister-ScheduledTask -TaskName 'AI-Workstation-AutoStart' -Confirm:$false
 Модели грузятся в VRAM только при запросе, выгружаются через 5 минут бездействия.
 
 
+
+
+## Aider — AI Coding Agent
+
+Aider — CLI-инструмент для AI-парного программирования. Работает с git-репозиториями,
+читает файлы, пишет код, делает коммиты.
+
+**Запуск:**
+
+```powershell
+# В терминале VS Code (откройте папку проекта):
+D:\Projectsi\scripts\setupider.bat <файлы> --message "задача"
+
+# Пример: добавить логирование
+D:\Projectsi\scripts\setupider.bat main.py --message "Add logging to all functions"
+
+# Рефакторинг
+D:\Projectsi\scripts\setupider.bat src/ --message "Refactor: extract helper functions"
+
+# Исправить баг
+D:\Projectsi\scripts\setupider.bat bug.py --message "Fix: handle null pointer in parse function"
+```
+
+**Модели:**
+
+| Алиас | Модель | Скорость | Качество |
+|-------|--------|----------|----------|
+| `coder-low` | qwen2.5-coder:7b | Быстро | Хорошо |
+| `coder-medium` | deepseek-coder-v2:lite | Средне | Отлично |
+| `coder-high` | qwen3-coder:30b | Медленно | Лучшее |
+
+Сменить модель: `--model openai/coder-medium`
+
+**Конфиг:** `.aider.conf.yml` (model, api-base, edit-format)
+
+
 ## Безопасность
 
 - Все сервисы на `127.0.0.1` только

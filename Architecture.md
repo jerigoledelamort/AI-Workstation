@@ -115,6 +115,19 @@ Workflow: `scripts/rag/agent_workflow.py`
 | Lockfile | `uv.lock` |
 | pyproject | `pyproject.toml` |
 
+### Coding Agent: Aider 0.86.2
+
+| Parameter | Value |
+|-----------|-------|
+| Binary | `D:\Projectsi\.venv\Scriptsider.exe` |
+| Wrapper | `scripts/setup/aider.bat` |
+| API | LiteLLM Proxy (`http://127.0.0.1:4000/v1`) |
+| Default model | `openai/coder-low` (qwen2.5-coder:7b) |
+| Config | `.aider.conf.yml` |
+| Model settings | `.aider.model.settings.yml` |
+| Edit format | diff (SEARCH/REPLACE blocks) |
+| Git integration | Auto-commit on changes |
+
 ### Chat UI: Open WebUI 0.10.2
 
 | Parameter | Value |
@@ -128,6 +141,19 @@ Workflow: `scripts/rag/agent_workflow.py`
 | Data dir | D:\Projects\ai\data\open-webui\ |
 | Secret key | D:\Projects\ai\.webui_secret_key |
 | Launch | scripts/setup/start-webui.ps1 |
+
+### Coding Agent: Aider 0.86.2
+
+| Parameter | Value |
+|-----------|-------|
+| Binary | `D:\Projectsi\.venv\Scriptsider.exe` |
+| Wrapper | `scripts/setup/aider.bat` |
+| API | LiteLLM Proxy (`http://127.0.0.1:4000/v1`) |
+| Default model | `openai/coder-low` (qwen2.5-coder:7b) |
+| Config | `.aider.conf.yml` |
+| Model settings | `.aider.model.settings.yml` |
+| Edit format | diff (SEARCH/REPLACE blocks) |
+| Git integration | Auto-commit on changes |
 
 ### Chat UI: Open WebUI 0.10.2
 
