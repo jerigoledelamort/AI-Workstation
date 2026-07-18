@@ -80,6 +80,7 @@ $services = @(
     @{Name='LiteLLM'; Url='http://127.0.0.1:4000/health/liveliness'},
     @{Name='Qdrant'; Url='http://127.0.0.1:6333/healthz'},
     @{Name='Router'; Url='http://127.0.0.1:4001/health'}
+    @{Name='Router'; Url='http://127.0.0.1:4001/health'}
     @{Name='Open WebUI'; Url='http://127.0.0.1:8080/health'}
 )
 foreach ($s in $services) {

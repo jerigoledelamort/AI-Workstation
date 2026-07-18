@@ -5,7 +5,6 @@ description = "Local AI Workstation for software development"
 requires-python = ">=3.10"
 dependencies = [
     "litellm[proxy]>=1.92.0",
-    "mkdocs-material>=9.7.0",
     "langchain>=0.3.0",
     "langchain-community>=0.3.0",
     "langchain-ollama>=1.1.0",

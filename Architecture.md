@@ -1,67 +1,114 @@
-# Architecture
+# Архитектура
 
-## System Overview
+## Обзор системы
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    AI Workstation                        │
-│                                                         │
-│  ┌──────────┐    ┌──────────────┐    ┌───────────────┐  │
-│  │  VS Code │───▶│  LiteLLM     │───▶│   Ollama      │  │
-│  │ Continue │    │  Proxy       │    │   :11434      │  │
-│  │          │    │  :4000       │    │   11 models   │  │
-│  └──────────┘    └──────┬───────┘    └───────┬───────┘  │
-│                         │                    │          │
-│                    API Key Auth         Embeddings      │
-│                         │                    │          │
-│  ┌──────────┐    ┌──────▼───────┐    ┌───────▼───────┐  │
-│  │  RAG     │───▶│  Qdrant      │◀───│   Ollama      │  │
-│  │  Pipeline│    │  :6333/6334  │    │   Embeddings  │  │
-│  └──────────┘    └──────────────┘    └───────────────┘  │
-│                                                         │
-│  ┌──────────┐    ┌──────────────┐                       │
-│  │  Agent   │───▶│  Ollama      │  Tool Calling         │
-│  │  Workflow│    │  :11434      │  (LangGraph)          │
-│  └──────────┘    └──────────────┘                       │
-│                                                         │
-│  ┌──────────┐    ┌──────────────┐                       │
-│  │  MkDocs  │    │  SOPS + age  │  Secrets              │
-│  │  :8000   │    │  .secrets    │  Encryption           │
-│  └──────────┘    └──────────────┘                       │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           AI Workstation                                 │
+│                                                                         │
+│   ┌─────────────┐     ┌──────────┐     ┌──────────┐     ┌────────────┐  │
+│   │   VS Code   │────▶│  Router  │────▶│ LiteLLM  │────▶│   Ollama   │  │
+│   │             │     │  Proxy   │     │  Proxy   │     │            │  │
+│   │  • Cline    │     │  :4001   │     │  :4000   │     │   :11434   │  │
+│   │  • Aider    │     │  (auto)  │     │  (auth)  │     │  11 models │  │
+│   │  • Continue │     └──────────┘     └──────────┘     └────────────┘  │
+│   └──────┬──────┘                                                        │
+│          │                                                               │
+│          │ MCP (SSE)                                                     │
+│          ▼                                                               │
+│   ┌─────────────┐     ┌──────────────────┐                               │
+│   │   Ghidra    │◀───▶│  GhidraMCP Bridge│  Реверс-инжиниринг          │
+│   │   :8080     │     │  :8081           │                               │
+│   └─────────────┘     └──────────────────┘                               │
+│                                                                         │
+│   ┌─────────────┐     ┌──────────────────┐                               │
+│   │  RAG        │────▶│     Qdrant       │  Векторная БД                │
+│   │  Pipeline   │     │  :6333 / :6334   │                               │
+│   └─────────────┘     └──────────────────┘                               │
+│                                                                         │
+│   ┌─────────────┐                                                       │
+│   │ Open WebUI  │  Web-чат (браузер)                                   │
+│   │   :8080     │                                                       │
+│   └─────────────┘                                                       │
+│                                                                         │
+│   ┌───────────────────────────────────────────────────────────────────┐ │
+│   │  SOPS 3.13.2  +  age 1.3.1  →  .secrets.yaml (encrypted)         │ │
+│   └───────────────────────────────────────────────────────────────────┘ │
+│                                                                         │
+│   ┌───────────────────────────────────────────────────────────────────┐ │
+│   │  Task Scheduler: AI-Workstation-AutoStart (AtLogon)               │ │
+│   └───────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-All services bind to 127.0.0.1. No external network access required.
+Все сервисы на `127.0.0.1`. Внешние подключения заблокированы firewall.
 
-## Components
+---
+
+## Компоненты
 
 ### Inference: Ollama 0.32.0
 
-| Parameter | Value |
-|-----------|-------|
+| Параметр | Значение |
+|----------|----------|
 | Binary | `C:\Users\egork\AppData\Local\Programs\Ollama\ollama.exe` |
 | Host | `127.0.0.1:11434` |
-| Models path | `C:\Users\egork\AppData\Local\Programs\Ollama` (env: `OLLAMA_MODELS`) |
-| Env var | `OLLAMA_HOST=127.0.0.1:11434` (User scope) |
-| Models | 11 (~97 ГБ total) |
+| Models path | `C:\Users\egork\AppData\Local\Programs\Ollama` |
+| Env | `OLLAMA_HOST=127.0.0.1:11434` (User scope) |
+| Моделей | 11 (~97 ГБ) |
+| Keep-alive | 5 минут (выгрузка из VRAM при простое) |
 
 ### API Gateway: LiteLLM Proxy 1.92.0
 
-| Parameter | Value |
-|-----------|-------|
+| Параметр | Значение |
+|----------|----------|
 | Binary | `D:\Projects\ai\.venv\Scripts\litellm.exe` |
 | Host | `127.0.0.1:4000` |
 | Config | `config/litellm/config.yaml` |
-| Auth | `master_key` from `os.environ/LITELLM_API_KEY` |
+| Auth | `master_key` из `os.environ/LITELLM_API_KEY` |
 | Launch | `scripts/setup/start-litellm.bat` |
 | Env | `PYTHONUTF8=1`, `PYTHONIOENCODING=utf-8` |
 
-LiteLLM decrypts `.secrets.yaml` через SOPS при запуске, устанавливая `LITELLM_API_KEY` в окружение.
+Расшифровывает `.secrets.yaml` через SOPS при запуске.
+
+### Router Proxy (автороутинг)
+
+| Параметр | Значение |
+|----------|----------|
+| Binary | `D:\Projects\ai\.venv\Scripts\python.exe` |
+| Script | `scripts/ai/router_proxy.py` |
+| Host | `127.0.0.1:4001` |
+| Backend | LiteLLM (`127.0.0.1:4000`) |
+| Launch | `scripts/setup/start-router.bat` |
+| Лог | `logs/router.log` |
+
+**Модели:**
+
+| Model ID | Поведение |
+|----------|----------|
+| `auto` | Анализ сложности → выбор модели |
+| `preset-light` | Всегда `coder-low` |
+| `preset-medium` | Всегда `coder-medium` |
+| `preset-heavy` | Всегда `coder-high` |
+
+**Эвристика `auto`:**
+
+| Сигнал | Балл |
+|--------|------|
+| Ключевые слова "refactor, architecture, rewrite" | +3 |
+| Ключевые слова "fix, add, implement" | +1 |
+| Ключевые слова "rename, comment, format" | −1 |
+| Контекст > 10K символов | +4 |
+| Контекст > 5K символов | +2 |
+| Каждый code block | +2 (макс 6) |
+| Каждая ссылка на файл | +1 (макс 3) |
+
+Итог: score ≥ 6 → `coder-high`, ≥ 2 → `coder-medium`, иначе `coder-low`.
 
 ### Vector DB: Qdrant 1.18.3
 
-| Parameter | Value |
-|-----------|-------|
+| Параметр | Значение |
+|----------|----------|
 | Binary | `C:\Tools\qdrant\qdrant.exe` |
 | HTTP | `127.0.0.1:6333` |
 | gRPC | `127.0.0.1:6334` |
@@ -69,15 +116,78 @@ LiteLLM decrypts `.secrets.yaml` через SOPS при запуске, уста
 | Storage | `C:\Tools\qdrant\storage\` |
 | Launch | `scripts/setup/start-qdrant.bat` |
 
-### RAG: LangChain + langchain-qdrant + langchain-ollama
+### Chat UI: Open WebUI 0.10.2
 
-| Component | Package | Version |
-|-----------|---------|---------|
+| Параметр | Значение |
+|----------|----------|
+| Binary | `D:\Projects\ai\.venv-webui\Scripts\open-webui.exe` |
+| Python | 3.12.13 (отдельный venv `.venv-webui/`) |
+| Host | `127.0.0.1:8080` |
+| Ollama URL | `http://127.0.0.1:11434` |
+| OpenAI API | `http://127.0.0.1:4000/v1` (LiteLLM) |
+| Data dir | `D:\Projects\ai\data\open-webui\` |
+| Secret key | `D:\Projects\ai\.webui_secret_key` |
+| Launch | `scripts/setup/start-webui.bat` |
+
+### Autonomous Agent: Cline (VS Code)
+
+| Параметр | Значение |
+|----------|----------|
+| Extension | `saoudrizwan.claude-dev` |
+| Provider | OpenAI Compatible |
+| Base URL | `http://127.0.0.1:4001/v1` (Router) |
+| Plan-модель | `preset-heavy` (qwen3-coder:30b) |
+| Act-модель | `preset-medium` (deepseek-coder-v2:lite) |
+| Config | `globalStorage/saoudrizwan.claude-dev/settings/` |
+| MCP config | `cline_mcp_settings.json` |
+| Capabilities | File R/W, terminal, browser, MCP |
+
+### Coding Agent: Aider 0.86.2
+
+| Параметр | Значение |
+|----------|----------|
+| Binary | `D:\Projects\ai\.venv\Scripts\aider.exe` |
+| Wrapper | `scripts/setup/aider.bat` |
+| API | LiteLLM (`http://127.0.0.1:4000/v1`) |
+| Модель по умолчанию | `openai/coder-low` |
+| Config | `.aider.conf.yml` |
+| Edit format | diff (SEARCH/REPLACE) |
+| Git | Auto-commit |
+
+### GhidraMCP 1.4
+
+| Параметр | Значение |
+|----------|----------|
+| Plugin | `tools/ghidramcp/GhidraMCP-1-4.zip` |
+| Bridge | `tools/ghidramcp/bridge_mcp_ghidra.py` |
+| Python venv | `.venv-mcp/` (Python 3.12) |
+| Ghidra HTTP | `127.0.0.1:8080` |
+| MCP Bridge | `127.0.0.1:8081` (SSE) |
+| Launch | `scripts/setup/start-ghidra-mcp.bat` |
+
+**Инструменты MCP:**
+`list_functions`, `decompile_function`, `disassemble_function`,
+`rename_function`, `set_comment`, `get_xrefs_to`, `list_strings`,
+`get_function_info`
+
+### Obsidian Vault Generator
+
+| Параметр | Значение |
+|----------|----------|
+| Script | `scripts/obsidian/create_vault.py` |
+| Auto-setup | `scripts/setup_helper.py` |
+| Структура | `.obsidian-memory/` в папке проекта |
+| Rules file | `.clinerules` в корне проекта |
+
+### RAG: LangChain + Qdrant + Ollama
+
+| Компонент | Пакет | Версия |
+|-----------|-------|--------|
 | Framework | langchain | 1.3.14 |
-| Ollama integration | langchain-ollama | 1.1.0 |
-| Qdrant integration | langchain-qdrant | 1.1.0 |
-| Text splitter | langchain-text-splitters | 1.1.2 |
-| Qdrant client | qdrant-client | 1.18.0 |
+| Ollama | langchain-ollama | 1.1.0 |
+| Qdrant | langchain-qdrant | 1.1.0 |
+| Splitter | langchain-text-splitters | 1.1.2 |
+| Client | qdrant-client | 1.18.0 |
 
 Pipeline: `scripts/rag/rag_pipeline.py`
 - `ingest <file>` — TextLoader → RecursiveCharacterTextSplitter (500/50) → OllamaEmbeddings → Qdrant
@@ -85,215 +195,121 @@ Pipeline: `scripts/rag/rag_pipeline.py`
 
 ### Agents: LangGraph 1.2.9
 
-| Component | Package | Version |
-|-----------|---------|---------|
-| Framework | langgraph | 1.2.9 |
-| Prebuilt | langgraph-prebuilt | 1.1.0 |
-
 Workflow: `scripts/rag/agent_workflow.py`
 - `create_react_agent(llm, tools)` — ReAct pattern
 - Tools: `calculate`, `echo`
 
 ### Secrets: SOPS 3.13.2 + age 1.3.1
 
-| Parameter | Value |
-|-----------|-------|
-| SOPS binary | `C:\Tools\sops\sops.exe` |
-| age binary | `C:\Tools\age\age\age.exe` |
-| age keypair | `~/.config/sops/age/keys.txt` |
-| SOPS config | `.sops.yaml` |
-| Encrypted file | `.secrets.yaml` (gitignored) |
-| age recipient | `age174mut7mmj64wxvjhkpnl7fc06egzwu4kfxxjeufqj837dlkflc0qhcetdh` |
+| Параметр | Значение |
+|----------|----------|
+| SOPS | `C:\Tools\sops\sops.exe` |
+| age | `C:\Tools\age\age\age.exe` |
+| Keypair | `~/.config/sops/age/keys.txt` |
+| Config | `.sops.yaml` |
+| Encrypted | `.secrets.yaml` (gitignored) |
+| Recipient | `age174mut7mmj64wxvjhkpnl7fc06egzwu4kfxxjeufqj837dlkflc0qhcetdh` |
 
-### Python: uv 0.11.29 + Python 3.10.10
+### Python: uv 0.11.29
 
-| Parameter | Value |
-|-----------|-------|
-| Python | 3.10.10 |
+| Параметр | Значение |
+|----------|----------|
+| Python | 3.10.10 (основной), 3.12.13 (WebUI, MCP) |
 | uv | 0.11.29 |
-| venv | `D:\Projects\ai\.venv\` |
+| venv | `.venv/` (основной), `.venv-webui/`, `.venv-mcp/` |
 | Lockfile | `uv.lock` |
-| pyproject | `pyproject.toml` |
 
-### Autonomous Agent: Cline (VS Code Extension)
+---
 
-| Parameter | Value |
-|-----------|-------|
-| Extension | `saoudrizwan.claude-dev` (Cline) |
-| Provider | OpenAI Compatible (LiteLLM) |
-| Base URL | `http://127.0.0.1:4000/v1` |
-| Model | `coder-low` (qwen2.5-coder:7b) |
-| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
-| Capabilities | File read/write, terminal, browser, MCP |
-
-### Autonomous Agent: Cline (VS Code Extension)
-
-| Parameter | Value |
-|-----------|-------|
-| Extension | `saoudrizwan.claude-dev` (Cline) |
-| Provider | OpenAI Compatible (LiteLLM) |
-| Base URL | `http://127.0.0.1:4000/v1` |
-| Model | `coder-low` (qwen2.5-coder:7b) |
-| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
-| Capabilities | File read/write, terminal, browser, MCP |
-
-### Coding Agent: Aider 0.86.2
-
-| Parameter | Value |
-|-----------|-------|
-| Binary | `D:\Projectsi\.venv\Scriptsider.exe` |
-| Wrapper | `scripts/setup/aider.bat` |
-| API | LiteLLM Proxy (`http://127.0.0.1:4000/v1`) |
-| Default model | `openai/coder-low` (qwen2.5-coder:7b) |
-| Config | `.aider.conf.yml` |
-| Model settings | `.aider.model.settings.yml` |
-| Edit format | diff (SEARCH/REPLACE blocks) |
-| Git integration | Auto-commit on changes |
-
-### Chat UI: Open WebUI 0.10.2
-
-| Parameter | Value |
-|-----------|-------|
-| Binary | D:\Projects\ai\.venv-webui\Scripts\open-webui.exe |
-| Python | 3.12.13 (separate venv: .venv-webui/) |
-| Host | 127.0.0.1:8080 |
-| Ollama URL | http://127.0.0.1:11434 |
-| OpenAI API URL | http://127.0.0.1:4000/v1 (LiteLLM) |
-| OpenAI API Key | $LITELLM_API_KEY (from SOPS) |
-| Data dir | D:\Projects\ai\data\open-webui\ |
-| Secret key | D:\Projects\ai\.webui_secret_key |
-| Launch | scripts/setup/start-webui.ps1 |
-
-### Autonomous Agent: Cline (VS Code Extension)
-
-| Parameter | Value |
-|-----------|-------|
-| Extension | `saoudrizwan.claude-dev` (Cline) |
-| Provider | OpenAI Compatible (LiteLLM) |
-| Base URL | `http://127.0.0.1:4000/v1` |
-| Model | `coder-low` (qwen2.5-coder:7b) |
-| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
-| Capabilities | File read/write, terminal, browser, MCP |
-
-### Autonomous Agent: Cline (VS Code Extension)
-
-| Parameter | Value |
-|-----------|-------|
-| Extension | `saoudrizwan.claude-dev` (Cline) |
-| Provider | OpenAI Compatible (LiteLLM) |
-| Base URL | `http://127.0.0.1:4000/v1` |
-| Model | `coder-low` (qwen2.5-coder:7b) |
-| Config | `globalStorage/saoudrizwan.claude-dev/settings/cline_api_config.json` |
-| Capabilities | File read/write, terminal, browser, MCP |
-
-### Coding Agent: Aider 0.86.2
-
-| Parameter | Value |
-|-----------|-------|
-| Binary | `D:\Projectsi\.venv\Scriptsider.exe` |
-| Wrapper | `scripts/setup/aider.bat` |
-| API | LiteLLM Proxy (`http://127.0.0.1:4000/v1`) |
-| Default model | `openai/coder-low` (qwen2.5-coder:7b) |
-| Config | `.aider.conf.yml` |
-| Model settings | `.aider.model.settings.yml` |
-| Edit format | diff (SEARCH/REPLACE blocks) |
-| Git integration | Auto-commit on changes |
-
-### Chat UI: Open WebUI 0.10.2
-
-| Parameter | Value |
-|-----------|-------|
-| Binary | `D:\Projectsi\.venv-webui\Scripts\open-webui.exe` |
-| Python | 3.12.13 (separate venv: `.venv-webui/`) |
-| Host | `127.0.0.1:8080` |
-| Ollama URL | `http://127.0.0.1:11434` |
-| OpenAI API URL | `http://127.0.0.1:4000/v1` (LiteLLM) |
-| OpenAI API Key | `$LITELLM_API_KEY` (from SOPS) |
-| Data dir | `D:\Projectsi\data\open-webui\` |
-| Secret key | `D:\Projectsi\.webui_secret_key` |
-| Launch | `scripts/setup/start-webui.ps1` |
-
-### Docs: MkDocs Material 9.7.7
-
-| Parameter | Value |
-|-----------|-------|
-| Config | `mkdocs.yml` |
-| Pages | `docs/` (7 страниц) |
-| Build | `python -m mkdocs build --strict` |
-| Serve | `python -m mkdocs serve` → `127.0.0.1:8000` |
-
-## Network Topology
+## Сетевая топология
 
 ```
 127.0.0.1:11434  → Ollama (HTTP API)
-127.0.0.1:4000   → LiteLLM Proxy (OpenAI-compatible API)
+127.0.0.1:4000   → LiteLLM Proxy (OpenAI-compatible)
+127.0.0.1:4001   → Router Proxy (автороутинг)
 127.0.0.1:6333   → Qdrant REST API
 127.0.0.1:6334   → Qdrant gRPC API
-127.0.0.1:8000   → MkDocs (docs)
-127.0.0.1:8080   → (reserved for Open WebUI)
+127.0.0.1:8080   → Open WebUI / Ghidra HTTP
+127.0.0.1:8081   → GhidraMCP Bridge (SSE)
 ```
 
-All ports blocked inbound by Windows Firewall.
+Все порты заблокированы inbound через Windows Firewall.
 
-## Data Flow
+---
 
-### Chat Completion
+## Потоки данных
+
+### Chat Completion (через Router)
+
 ```
-VS Code/Continue → POST :4000/v1/chat/completions
+VS Code (Cline) → POST :4001/v1/chat/completions
+  → Router анализирует сложность
+  → Выбирает модель (coder-low / medium / high)
+  → POST :4000/v1/chat/completions
   → LiteLLM auth (API key)
-  → Route by model alias (e.g. "chat-low" → ollama/qwen3:8b)
-  → POST :11434/api/chat
+  → Route by alias → POST :11434/api/chat
   → Ollama inference
-  → Response → LiteLLM → Continue
+  → Response → LiteLLM → Router → Cline
 ```
 
 ### RAG Ingest
+
 ```
 rag_pipeline.py ingest <file>
-  → TextLoader (read file)
-  → RecursiveCharacterTextSplitter (chunk_size=500, overlap=50)
-  → OllamaEmbeddings (nomic-embed-text via :11434)
-  → QdrantVectorStore.from_documents (POST :6333/collections)
+  → TextLoader
+  → RecursiveCharacterTextSplitter (chunk=500, overlap=50)
+  → OllamaEmbeddings (nomic-embed-text)
+  → QdrantVectorStore.from_documents (:6333)
 ```
 
 ### RAG Query
+
 ```
 rag_pipeline.py query "question"
   → OllamaEmbeddings (embed question)
-  → Qdrant search (top-3 similar chunks)
+  → Qdrant search (top-3)
   → ChatPromptTemplate (context + question)
-  → ChatOllama (qwen3:8b via :11434)
-  → StrOutputParser → answer
+  → ChatOllama (qwen3:8b)
+  → Answer
 ```
 
-### Agent
+### Ghidra Analysis (через Cline MCP)
+
 ```
-agent_workflow.py "question"
-  → create_react_agent(ChatOllama, [calculate, echo])
-  → LLM decides tool call
-  → Tool execution
-  → LLM generates final answer
+Cline → MCP SSE :8081
+  → bridge_mcp_ghidra.py
+  → HTTP :8080 (GhidraMCP plugin)
+  → Ghidra decompile/rename/comment
+  → Result → Bridge → Cline
+  → Cline writes findings to .obsidian-memory/research/
 ```
 
-## Security Layers
+---
 
-1. **Network binding** — all services on `127.0.0.1` only
-2. **Firewall** — 6 inbound block rules (11434, 4000, 6333, 6334, 8080, 8000)
-3. **API auth** — LiteLLM `master_key` required for all requests
-4. **Secrets encryption** — SOPS + age, `.secrets.yaml` encrypted at rest
-5. **Git hygiene** — `.gitignore` excludes `.secrets.yaml`, `*.key`, `.env`, `.venv/`
+## Уровни безопасности
 
-## Environment Variables
+| # | Слой | Реализация |
+|---|------|-----------|
+| 1 | Сеть | Все сервисы на `127.0.0.1` |
+| 2 | Firewall | 6+ inbound block правил |
+| 3 | API auth | LiteLLM `master_key` |
+| 4 | Секреты | SOPS + age, `.secrets.yaml` |
+| 5 | Git | `.gitignore` исключает секреты, ключи, venv |
 
-| Variable | Scope | Value |
-|----------|-------|-------|
+---
+
+## Переменные окружения
+
+| Переменная | Scope | Значение |
+|------------|-------|----------|
 | `OLLAMA_HOST` | User | `127.0.0.1:11434` |
 | `OLLAMA_MODELS` | User | `C:\Users\egork\AppData\Local\Programs\Ollama` |
-| `SOPS_AGE_KEY_FILE` | Runtime | `~/.config/sops/age/keys.txt` |
-| `LITELLM_API_KEY` | Runtime (from SOPS) | `sk-...` (в .secrets.yaml) |
-| `PYTHONUTF8` | Runtime (start-litellm.bat) | `1` |
-| `PYTHONIOENCODING` | Runtime (start-litellm.bat) | `utf-8` |
-| `CONTINUE_API_KEY` | User/Process | Same as LITELLM_API_KEY |
+| `SOPS_AGE_KEY_FILE` | User | `~/.config/sops/age/keys.txt` |
+| `LITELLM_API_KEY` | Runtime (SOPS) | `sk-...` |
+| `OPENAI_API_KEY` | User | То же что `LITELLM_API_KEY` (для Aider) |
+| `CONTINUE_API_KEY` | User | То же что `LITELLM_API_KEY` |
+| `PYTHONUTF8` | Runtime | `1` |
+| `PYTHONIOENCODING` | Runtime | `utf-8` |
 
 ## PATH (User scope)
 
@@ -303,46 +319,21 @@ C:\Tools\sops
 C:\Tools\qdrant
 ```
 
-## Configuration Files
+---
 
-### config/litellm/config.yaml
+## Конфигурационные файлы
 
-Роутинг 11 моделей через алиасы (chat-low, coder-medium, etc.) на Ollama. Master key из `os.environ/LITELLM_API_KEY`. Request timeout: 300s. `drop_params: true`.
-
-### config/qdrant/qdrant.yaml
-
-Host: `127.0.0.1`, HTTP: 6333, gRPC: 6334. Storage: `./storage`.
-
-### .sops.yaml
-
-Regex `\.secrets\.yaml$` → age recipient `age174mut7mmj64wxvjhkpnl7fc06egzwu4kfxxjeufqj837dlkflc0qhcetdh`.
-
-### ~/.continue/config.json
-
-6 моделей (chat/coder × low/medium/high) + tabAutocompleteModel (coder-low) + embeddingsProvider (embed-low). All via `http://127.0.0.1:4000/v1` with `CONTINUE_API_KEY`.
-
-### .vscode/settings.json
-
-Python interpreter: `.venv\Scripts\python.exe`. UTF-8. EOL: LF. Search/file excludes for `.venv`, `site`, `__pycache__`.
-
-### .devcontainer/devcontainer.json
-
-Docker dev container with Python 3.10 + Node LTS. Extensions: Python, Pylance, Continue. Forward ports: 4000, 11434. `OLLAMA_HOST=host.docker.internal:11434`.
-
-### mkdocs.yml
-
-Material theme, Russian language, dark/light toggle, 7 pages in nav.
-
-### .gitignore
-
-Excludes: `.venv/`, `logs/`, `backup/`, `site/`, `.secrets.yaml`, `*.key`, `.env`, `.obsidian/`, model files (`*.gguf`, `*.safetensors`), `data/qdrant/*`, `data/open-webui/*`.
-
-### .gitattributes
-
-LF by default, CRLF for `*.ps1`, `*.bat`, `*.cmd`. Binary for images, archives, executables, models. Git LFS for `*.gguf`, `*.safetensors`.
-
-### .python-version
-
-```
-3.10
-```
+| Файл | Описание |
+|------|----------|
+| `config/litellm/config.yaml` | Роутинг 11 моделей, master_key, timeout 300s |
+| `config/qdrant/qdrant.yaml` | Host, порты, storage path |
+| `.sops.yaml` | Regex `\.secrets\.yaml$` → age recipient |
+| `.secrets.yaml` | Зашифрованные ключи (gitignored) |
+| `.aider.conf.yml` | Модель, API base, edit-format |
+| `.aider.model.settings.yml` | Параметры моделей для Aider |
+| `.clinerules` | Глобальные правила для Cline |
+| `.vscode/settings.json` | Python interpreter, UTF-8 |
+| `.devcontainer/devcontainer.json` | Docker dev container |
+| `.gitignore` | Исключения |
+| `.gitattributes` | Line endings + LFS |
+| `.python-version` | `3.10` |

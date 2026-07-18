@@ -2,90 +2,125 @@
 
 ## Сервисы
 
-### Ollama не отвечает
-
-```powershell
-# Проверить процесс
-Get-Process ollama
-
-# Проверить порт
-Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/tags' -TimeoutSec 5
-
-# Проверить env
-[Environment]::GetEnvironmentVariable('OLLAMA_HOST', 'User')
-# Должно быть: 127.0.0.1:11434
-
-# Запустить вручную
-Start-Process ollama -ArgumentList "serve" -WindowStyle Hidden
-```
-
-**Возможные причины:**
-- `OLLAMA_HOST` не установлен или не `127.0.0.1:11434`
-- Порт занят другим процессом: `netstat -ano | findstr 11434`
-- Models path недоступен: проверить `OLLAMA_MODELS`
-
-### LiteLLM не запускается
-
-```powershell
-# Проверить процесс
-Get-Process litellm
-
-# Проверить порт
-Invoke-RestMethod -Uri 'http://127.0.0.1:4000/health/liveliness' -TimeoutSec 5
-
-# Запустить вручную и посмотреть вывод
-.\scripts\setup\start-litellm.bat
-```
-
-**Возможные причины:**
-- SOPS не может расшифровать `.secrets.yaml` → проверить `SOPS_AGE_KEY_FILE`
-- `PYTHONUTF8=1` не установлен → Unicode ошибки в Windows
-- Ollama не запущен → LiteLLM не может проксировать
-- venv повреждён → `uv sync` для переустановки
-
-**Unicode ошибки:**
-```
-UnicodeEncodeError: 'charmap' codec can't encode characters
-```
-Решение: убедиться что `start-litellm.bat` содержит `set PYTHONUTF8=1` и `set PYTHONIOENCODING=utf-8`.
-
-### Qdrant не запускается
-
-```powershell
-# Проверить процесс
-Get-Process qdrant
-
-# Проверить порт
-Invoke-RestMethod -Uri 'http://127.0.0.1:6333/healthz' -TimeoutSec 5
-
-# Запустить вручную
-cd C:\Tools\qdrant
-.\qdrant.exe --config-path D:\Projects\ai\config\qdrant\qdrant.yaml
-```
-
-**Возможные причины:**
-- Порт 6333/6334 занят → `netstat -ano | findstr 633`
-- Storage path недоступен → проверить `C:\Tools\qdrant\storage\`
-- Config file не найден → проверить путь в `--config-path`
-
 ### Health check показывает FAIL
 
 ```powershell
 .\scripts\monitoring\health-check.ps1
 ```
 
-Проверяет 3 сервиса. Если FAIL:
-1. Запустить `start-all.ps1`
-2. Подождать 15 секунд
+Если FAIL:
+1. `.\scripts\setup\start-all.ps1`
+2. Подождать 30 секунд
 3. Повторить health check
+
+### Ollama не отвечает
+
+```powershell
+# Процесс
+Get-Process ollama
+
+# Порт
+Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/tags' -TimeoutSec 5
+
+# Env
+[Environment]::GetEnvironmentVariable('OLLAMA_HOST', 'User')
+# Должно быть: 127.0.0.1:11434
+
+# Запуск вручную
+Start-Process ollama -ArgumentList "serve" -WindowStyle Hidden
+```
+
+**Причины:**
+- `OLLAMA_HOST` не установлен
+- Порт занят: `netstat -ano | findstr 11434`
+- Models path недоступен
+
+### LiteLLM не запускается
+
+```powershell
+Get-Process litellm
+Invoke-RestMethod -Uri 'http://127.0.0.1:4000/health/liveliness' -TimeoutSec 5
+.\scripts\setup\start-litellm.bat   # вручную, смотреть вывод
+```
+
+**Причины:**
+- SOPS не может расшифровать `.secrets.yaml` → проверить `SOPS_AGE_KEY_FILE`
+- `PYTHONUTF8=1` не установлен → Unicode ошибки
+- Ollama не запущен
+
+**Unicode ошибка:**
+```
+UnicodeEncodeError: 'charmap' codec can't encode characters
+```
+Решение: `start-litellm.bat` должен содержать `set PYTHONUTF8=1` и `set PYTHONIOENCODING=utf-8`.
+
+### Router Proxy не запускается
+
+```powershell
+Invoke-RestMethod -Uri 'http://127.0.0.1:4001/health' -TimeoutSec 5
+.\scripts\setup\start-router.bat   # вручную
+```
+
+**Причины:**
+- LiteLLM не запущен (Router проксирует на `:4000`)
+- `.venv` повреждён → `uv sync`
+
+### Qdrant не запускается
+
+```powershell
+Get-Process qdrant
+Invoke-RestMethod -Uri 'http://127.0.0.1:6333/healthz' -TimeoutSec 5
+.\scripts\setup\start-qdrant.bat
+```
+
+**Причины:**
+- Порт 6333/6334 занят → `netstat -ano | findstr 633`
+- Storage path недоступен
+
+### Open WebUI не запускается
+
+```powershell
+Invoke-RestMethod -Uri 'http://127.0.0.1:8080/health' -TimeoutSec 10
+.\scripts\setup\start-webui.bat
+```
+
+**Причины:**
+- `.venv-webui/` повреждён → пересоздать
+- `LITELLM_API_KEY` не передан → проверить SOPS decrypt
+
+---
+
+## GhidraMCP
+
+### Cline не видит GhidraMCP
+
+1. Ghidra запущен с бинарником, GhidraMCP plugin включён
+2. HTTP сервер GhidraMCP на `127.0.0.1:8080` активен
+3. MCP Bridge запущен: `Get-Process python` (должен быть процесс bridge)
+4. `cline_mcp_settings.json` содержит:
+   ```json
+   { "mcpServers": { "ghidra": { "url": "http://127.0.0.1:8081/sse" } } }
+   ```
+5. Перезапустить VS Code
+
+### Bridge падает
+
+```powershell
+.\scripts\setup\start-ghidra-mcp.bat   # вручную, смотреть вывод
+```
+
+**Причины:**
+- `.venv-mcp/` повреждён → `uv pip install mcp httpx` в `.venv-mcp`
+- Ghidra HTTP не отвечает → проверить plugin в Ghidra
+
+---
 
 ## Python / uv
 
 ### No module named pip
 
+uv venv не включает pip. Использовать:
 ```powershell
-# НЕ использовать python -m pip
-# Использовать uv:
 uv pip list
 uv pip install <package>
 uv sync
@@ -94,7 +129,6 @@ uv sync
 ### venv повреждён
 
 ```powershell
-# Удалить и пересоздать
 Remove-Item -Recurse -Force .venv
 uv venv .venv --python 3.10
 uv sync
@@ -106,30 +140,27 @@ uv sync
 ImportError: cannot import name 'Qdrant' from 'langchain_community.vectorstores'
 ```
 
-**Решение:** Использовать `langchain-qdrant` и `langchain-ollama`:
+Решение — использовать `langchain-qdrant` и `langchain-ollama`:
 ```python
-from langchain_qdrant import QdrantVectorStore  # НЕ langchain_community
-from langchain_ollama import OllamaEmbeddings, ChatOllama  # НЕ langchain_community
+from langchain_qdrant import QdrantVectorStore
+from langchain_ollama import OllamaEmbeddings, ChatOllama
 ```
 
 ### SOPS decrypt IndexError
 
-```
-IndexError: list index out of range
-```
-
-**Решение:** SOPS выводит `KEY: value` без кавычек. Парсинг:
+SOPS выводит `KEY: value` без кавычек. Парсинг:
 ```python
 val = line.split(":", 1)[1].strip().strip('"').strip("'")
 ```
+
+---
 
 ## Безопасность
 
 ### LiteLLM принимает запросы без API key
 
 ```powershell
-# Проверить
-$body = @{ model = 'chat-low'; messages = @(@{ role='user'; content='test' }) } | ConvertTo-Json
+$body = @{ model='chat-low'; messages=@(@{ role='user'; content='test' }) } | ConvertTo-Json
 try {
     Invoke-RestMethod -Uri 'http://127.0.0.1:4000/v1/chat/completions' -Method POST -ContentType 'application/json' -Body $body -TimeoutSec 5
     Write-Host "FAIL: Auth disabled!"
@@ -139,7 +170,7 @@ try {
 ```
 
 Если auth не работает:
-1. Проверить `config/litellm/config.yaml` → `general_settings.master_key`
+1. Проверить `config/litellm/config.yaml` → `master_key`
 2. Проверить что `LITELLM_API_KEY` загружается из SOPS
 3. Перезапустить LiteLLM
 
@@ -166,126 +197,83 @@ foreach ($p in $ports) {
 ### SOPS не может расшифровать
 
 ```powershell
-# Проверить key file
 Test-Path "$env:USERPROFILE\.config\sops\age\keys.txt"
-
-# Установить env
 $env:SOPS_AGE_KEY_FILE = "$env:USERPROFILE\.config\sops\age\keys.txt"
-
-# Попробовать расшифровать
 & 'C:\Tools\sops\sops.exe' --decrypt '.secrets.yaml'
 ```
 
-Если keys.txt утерян — см. [DisasterRecovery.md](DisasterRecovery.md) → "Только секреты".
+Если `keys.txt` утерян → [DisasterRecovery.md](DisasterRecovery.md) → «Только секреты».
+
+---
 
 ## Производительность
 
 ### Модель загружается медленно
 
 ```powershell
-# Проверить VRAM
 .\scripts\monitoring\vram-check.ps1
-
-# Использовать модель меньшего размера
-# chat-low вместо chat-high
+# Использовать модель меньшего размера: chat-low вместо chat-high
 ```
 
-### Ollama OOM (out of memory)
+### Ollama OOM
 
 ```powershell
-# Проверить VRAM и RAM
 nvidia-smi
 Get-CimInstance Win32_OperatingSystem | Select-Object TotalVisibleMemorySize, FreePhysicalMemory
-
-# Закрыть лишние модели
-ollama rm <unused-model>
-
-# Использовать Low profile модели
+ollama rm <unused-model>   # удалить неиспользуемые
 ```
 
 ### RAG работает медленно
 
 - Уменьшить `chunk_size` (500 → 300)
 - Уменьшить `k` в retriever (3 → 2)
-- Использовать `nomic-embed-text` вместо `bge-m3` (меньше размер)
+- Использовать `nomic-embed-text` вместо `bge-m3`
 
-## VS Code / Continue
+---
 
-### Continue не подключается к LiteLLM
+## Cline / VS Code
 
-1. Проверить `CONTINUE_API_KEY` environment variable
-2. Проверить что LiteLLM запущен: `health-check.ps1`
-3. Проверить `~/.continue/config.json` → `apiBase: http://127.0.0.1:4000/v1`
-4. Перезапустить VS Code после установки env var
+### Cline не подключается
 
-### Autocomplete не работает
+1. Проверить что Router запущен: `Invoke-RestMethod http://127.0.0.1:4001/health`
+2. Проверить Cline config: Base URL `http://127.0.0.1:4001/v1`
+3. Перезапустить VS Code
 
-- Проверить `tabAutocompleteModel` в config.json → `coder-low`
-- Убедиться что Ollama запущен
-- Проверить `embeddingsProvider` → `embed-low`
+### Cline не видит MCP инструменты
 
-## MkDocs
+1. Проверить `cline_mcp_settings.json`
+2. Перезапустить VS Code
+3. Проверить что MCP-сервер запущен (GhidraMCP Bridge на `:8081`)
 
-### Build error
+### .clinerules не читается
 
-```powershell
-cd D:\Projects\ai
-& '.venv\Scripts\python.exe' -m mkdocs build --strict
-```
+- Файл должен быть в корне открытой папки
+- Cline читает его автоматически при старте чата
 
-Все ссылки в nav должны существовать в `docs/`.
-
-### Serve не запускается
-
-```powershell
-& '.venv\Scripts\python.exe' -m mkdocs serve
-# Доступен на http://127.0.0.1:8000
-```
-
-Если порт занят: `mkdocs serve --dev-addr 127.0.0.1:8001`
+---
 
 ## Автозапуск
 
 ### Сервисы не запускаются при логине
 
 ```powershell
-# Проверить задачу
 Get-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
-
-# Проверить результат последнего запуска
 Get-ScheduledTaskInfo -TaskName 'AI-Workstation-AutoStart'
-
-# Запустить вручную
 Start-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
-
-# Проверить после запуска
-.\scripts\monitoring\health-check.ps1
 ```
 
-**Возможные причины:**
-- Задача отключена -> `Enable-ScheduledTask`
-- `start-all.ps1` недоступен -> проверить путь
-- ExecutionPolicy блокирует -> задача использует `-ExecutionPolicy Bypass`
-- Сервисы конфликтуют -> `stop-all.ps1` затем `start-all.ps1`
-
-### Отключить автозапуск
-
-```powershell
-Disable-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
-```
-
-### Восстановить автозапуск
-
-```powershell
-Enable-ScheduledTask -TaskName 'AI-Workstation-AutoStart'
-```
+**Причины:**
+- Задача отключена → `Enable-ScheduledTask`
+- `start-all.ps1` недоступен
+- ExecutionPolicy → задача использует `-ExecutionPolicy Bypass`
+- Конфликт сервисов → `stop-all.ps1` затем `start-all.ps1`
 
 ### Пересоздать задачу
 
 ```powershell
 Unregister-ScheduledTask -TaskName 'AI-Workstation-AutoStart' -Confirm:$false
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"D:\Projectsi\scripts\setup\start-all.ps1`""
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"D:\Projects\ai\scripts\setup\start-all.ps1`""
 $trigger = New-ScheduledTaskTrigger -AtLogOn
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
 Register-ScheduledTask -TaskName "AI-Workstation-AutoStart" -Action $action -Trigger $trigger -Settings $settings -Description "AI Workstation: start all services at logon"

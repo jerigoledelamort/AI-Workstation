@@ -1,56 +1,62 @@
 # Roadmap
 
-## Текущий статус (v0.1.0)
+## Текущий статус: v0.5.0
 
-| Phase | Name | Status |
-|-------|------|--------|
-| 1 | Project structure | ✅ Complete |
-| 2 | Base infrastructure | ✅ Complete |
-| 3 | AI inference layer | ✅ Complete |
-| 4 | Dev environment | ✅ Complete |
-| 5 | Security | ✅ Complete |
-| 6 | RAG & agents | ✅ Complete |
-| 7 | Automation | ✅ Complete |
-| 8 | Documentation | ✅ Complete |
-| 9 | Tests & audit | ✅ Complete |
+| Версия | Компонент | Статус |
+|--------|-----------|--------|
+| 0.1 | Базовая инфраструктура + inference + security + RAG | ✅ Complete |
+| 0.2 | Open WebUI + автозапуск | ✅ Complete |
+| 0.3 | Aider (CLI coding agent) | ✅ Complete |
+| 0.4 | Cline (autonomous VS Code agent) | ✅ Complete |
+| 0.5 | Router Proxy + GhidraMCP + Obsidian | ✅ Complete |
+
+---
 
 ## Планы развития
 
-### v0.2 — Open WebUI ✅ ✅
+### v0.6 — Advanced RAG
 
-- Установка Open WebUI (`pip install open-webui`)
-- Интеграция с LiteLLM Proxy
-- Web UI для чата с моделями
-- Порт 8080 (firewall rule уже создан)
+- [ ] Поддержка PDF, Markdown, кода
+- [ ] Semantic chunking (code-aware)
+- [ ] Hybrid search (dense + sparse)
+- [ ] Re-ranking моделей
+- [ ] Qdrant Web UI (или替代)
 
-### v0.3 — MCP Server
+### v0.7 — Multi-agent Workflows
 
-- Model Context Protocol server
-- Интеграция с Continue
-- Tool calling из VS Code
+- [ ] LangGraph multi-agent orchestration
+- [ ] Специализированные агенты (coder, reviewer, tester)
+- [ ] Workflow templates
+- [ ] Agent-to-agent коммуникация
 
-### v0.4 — Advanced RAG
+### v0.8 — Model Fine-tuning
 
-- Поддержка PDF, Markdown, кода
-- Chunking стратегии (semantic, code-aware)
-- Hybrid search (dense + sparse)
-- Re-ranking моделей
+- [ ] LoRA fine-tuning через Unsloth
+- [ ] Локальные датасеты
+- [ ] Custom model registry
+- [ ] Evaluation pipeline
 
-### v0.5 — Multi-agent Workflows
+### v0.9 — Monitoring & Observability
 
-- LangGraph multi-agent orchestration
-- Специализированные агенты (coder, reviewer, tester)
-- Workflow templates
-
-### v0.6 — Model Fine-tuning
-
-- LoRA fine-tuning через Unsloth
-- Локальные датасеты
-- Custom model registry
+- [ ] Prometheus metrics (LiteLLM, Ollama)
+- [ ] Grafana dashboard
+- [ ] Alerting (VRAM, latency, errors)
+- [ ] Token usage tracking
 
 ### v1.0 — Production Ready
 
-- Systemd/Windows Service для автозапуска
-- Monitoring dashboard (Prometheus + Grafana)
-- CI/CD pipeline
-- Full backup/restore automation
+- [ ] Windows Service (вместо Task Scheduler)
+- [ ] CI/CD pipeline
+- [ ] Full backup/restore automation
+- [ ] Multi-user support (если понадобится)
+- [ ] Performance benchmarking suite
+
+---
+
+## Идеи (без приоритета)
+
+- Voice interface (Whisper локально)
+- Code search across all projects (Qdrant)
+- Automated code review на git hooks
+- Custom MCP servers для других инструментов (IDA Pro, x64dbg)
+- Distributed inference (если появится 2-я GPU)

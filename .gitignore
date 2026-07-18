@@ -13,6 +13,7 @@ build/
 # === uv ===
 .venv/
 .venv-webui/
+.venv-mcp/
 venv/
 
 # === IDE ===
@@ -82,5 +83,3 @@ site/
 .aider.chat.history.md
 .aider.input.history
 .aider.repo.map
-
-.venv-mcp/
