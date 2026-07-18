@@ -77,3 +77,8 @@ site/
 *.key
 .env
 .env.*
+
+# Aider
+.aider.chat.history.md
+.aider.input.history
+.aider.repo.map

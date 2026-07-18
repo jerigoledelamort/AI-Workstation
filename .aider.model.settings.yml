@@ -1,0 +1,13 @@
+# Custom model settings for local Qwen models via LiteLLM
+- name: openai/chat-high
+  edit_format: diff
+  weak_model_name: openai/chat-low
+  use_repo_map: true
+  send_undo_reply: false
+  lazy: true
+  reminder_as_sys_prompt: true
+  examples_as_sys_prompt: false
+  extra_params:
+    max_tokens: 8192
+    temperature: 0.3
+    top_p: 0.9

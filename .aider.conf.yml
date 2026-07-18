@@ -1,0 +1,32 @@
+# Aider configuration for AI Workstation
+# Uses LiteLLM proxy (local models via Ollama)
+
+# Model: qwen2.5-coder:7b (fast, good for coding)
+model: openai/coder-low
+
+# API settings (via LiteLLM proxy)
+openai-api-base: http://127.0.0.1:4000/v1
+
+# Disable update check (causes hang in non-interactive)
+check-update: false
+
+# Auto-commit changes
+auto-commits: true
+
+# Use git for tracking changes
+git: true
+
+# Dark mode for terminal
+dark-mode: true
+
+# No pretty output (for Windows compatibility)
+pretty: false
+
+# Always say yes
+yes-always: true
+
+# Stream responses
+stream: false
+
+# Edit format
+edit-format: diff
