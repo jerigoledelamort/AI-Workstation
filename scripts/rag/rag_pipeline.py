@@ -1,4 +1,4 @@
-﻿"""RAG Pipeline: document ingestion + retrieval using LangChain + Qdrant + Ollama.
+"""RAG Pipeline: document ingestion + retrieval using LangChain + Qdrant + Ollama.
 
 Usage:
     python scripts/rag/rag_pipeline.py ingest <file_path>
@@ -13,21 +13,20 @@ import subprocess
 def load_api_key():
     sops_exe = r"C:\Tools\sops\sops.exe"
     os.environ["SOPS_AGE_KEY_FILE"] = os.path.expanduser(r"~\.config\sops\age\keys.txt")
-    result = subprocess.run([sops_exe, "--decrypt", ".secrets.yaml"], capture_output=True, text=True)
+    result = subprocess.run([sops_exe, "--decrypt", ".secrets.yaml"], capture_output=True, text=True, cwd=r"D:\Projects\ai")
     for line in result.stdout.splitlines():
-        if "LITELLM_API_KEY" in line:
-            key = line.split('"')[1]
-            os.environ["LITELLM_API_KEY"] = key
-            return key
+        if line.startswith("LITELLM_API_KEY:"):
+            val = line.split(":", 1)[1].strip().strip('"').strip("'")
+            os.environ["LITELLM_API_KEY"] = val
+            return val
     return None
 
 load_api_key()
 
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores import Qdrant
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import OllamaEmbeddings, ChatOllama
+from langchain_qdrant import QdrantVectorStore
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -47,7 +46,7 @@ def ingest(file_path):
     
     embeddings = OllamaEmbeddings(base_url="http://127.0.0.1:11434", model=EMBED_MODEL)
     
-    vs = Qdrant.from_documents(
+    vs = QdrantVectorStore.from_documents(
         chunks, embeddings,
         url=QDRANT_URL,
         collection_name=COLLECTION_NAME,
@@ -58,10 +57,10 @@ def query(question):
     """Query the RAG pipeline."""
     embeddings = OllamaEmbeddings(base_url="http://127.0.0.1:11434", model=EMBED_MODEL)
     
-    vs = Qdrant(
+    vs = QdrantVectorStore.from_existing_collection(
         url=QDRANT_URL,
         collection_name=COLLECTION_NAME,
-        embeddings=embeddings,
+        embedding=embeddings,
     )
     
     retriever = vs.as_retriever(search_kwargs={"k": 3})

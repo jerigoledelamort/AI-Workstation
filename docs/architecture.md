@@ -1,11 +1,14 @@
-﻿# Architecture
+# Architecture
 
 ## System Overview
 
 ```
 [User] → [LiteLLM Proxy :4000] → [Ollama :11434] → [Models]
-                ↑
-        [API Key Auth]
+                ↑                         ↓
+        [API Key Auth]          [Embeddings :11434]
+                                        ↓
+[User] → [RAG Pipeline] → [Qdrant :6333/:6334]
+[User] → [Agent Workflow] → [Ollama :11434]
 ```
 
 ## Components
@@ -14,6 +17,9 @@
 |-----------|-----------|------|
 | Inference | Ollama 0.32 | 11434 |
 | API Gateway | LiteLLM Proxy | 4000 |
+| Vector DB | Qdrant 1.18.3 | 6333/6334 |
+| RAG | LangChain + langchain-qdrant | — |
+| Agents | LangGraph | — |
 | Secrets | SOPS + age | — |
 | Python | uv + venv | — |
 | Docs | MkDocs Material | 8000 |

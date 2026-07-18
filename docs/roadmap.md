@@ -1,4 +1,4 @@
-﻿# Roadmap
+# Roadmap
 
 ## Implementation Status
 
@@ -9,12 +9,14 @@
 | 3 | AI inference layer | ✅ Complete |
 | 4 | Dev environment | ✅ Complete |
 | 5 | Security | ✅ Complete |
-| 6 | RAG & agents | ⬜ Pending |
+| 6 | RAG & agents | ✅ Complete |
 | 7 | Automation | ✅ Complete |
 | 8 | Documentation | ✅ Complete |
 | 9 | Tests & audit | ✅ Complete |
 
-## Phase 6: RAG & Agents (Pending)
+## Phase 6: RAG & Agents (Complete)
 
-Requires decision on Docker usage for Qdrant + Open WebUI.
-Alternatives: native binary installation or pip packages.
+- Qdrant 1.18.3 (native binary, no Docker)
+- LangChain + LangGraph + langchain-qdrant + langchain-ollama
+- RAG pipeline: ingest + query (tested ✅)
+- Agent workflow: tool calling (tested ✅)

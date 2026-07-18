@@ -1,4 +1,4 @@
-﻿"""Agent workflow using LangGraph + Ollama.
+"""Agent workflow using LangGraph + Ollama.
 
 A simple agent that can answer questions using tool calling.
 """
@@ -10,17 +10,17 @@ import sys
 def load_api_key():
     sops_exe = r"C:\Tools\sops\sops.exe"
     os.environ["SOPS_AGE_KEY_FILE"] = os.path.expanduser(r"~\.config\sops\age\keys.txt")
-    result = subprocess.run([sops_exe, "--decrypt", ".secrets.yaml"], capture_output=True, text=True)
+    result = subprocess.run([sops_exe, "--decrypt", ".secrets.yaml"], capture_output=True, text=True, cwd=r"D:\Projects\ai")
     for line in result.stdout.splitlines():
-        if "LITELLM_API_KEY" in line:
-            key = line.split('"')[1]
-            os.environ["LITELLM_API_KEY"] = key
-            return key
+        if line.startswith("LITELLM_API_KEY:"):
+            val = line.split(":", 1)[1].strip().strip('"').strip("'")
+            os.environ["LITELLM_API_KEY"] = val
+            return val
     return None
 
 load_api_key()
 
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
 
