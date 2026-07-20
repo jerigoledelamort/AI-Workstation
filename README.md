@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 AI Workstation
+# 🧠 Project Aegis
 
 **Полностью локальная AI-станция для разработки ПО и реверс-инжиниринга.**
 
